@@ -32,7 +32,11 @@ let bestBuyPrice = 1
 let usedWalletNbForExecuteBestBuy = 5
 let partialSellAmount = 6
 
+/* Add an order at an already existing price */
+let usedWalletNbForSecondSameOrder = 6
+
 /* Scenario when 1 order executes against 2 opposite orders with the same price */
+
 
 describe('Retrieve Connected Signers', function () {
      it('retrieve the connected  signers', async function () {
@@ -72,8 +76,8 @@ describe('Deploy contracts', function () {
 })
 
 describe('Distribute tokens', function () {
-    it('should send 100 NVDA and 100 STOX tokens to 5 test wallets', async function () {
-        for (let x = 1; x < 6; x++) {
+    it('should send 100 NVDA and 100 STOX tokens to 6 test wallets', async function () {
+        for (let x = 1; x < 7; x++) {
             await NVDAContract.transfer(
                 SIGNERS[x].address,
                 distributedAmount
@@ -499,3 +503,100 @@ describe('Partially execute the first BUY order', function () {
         expect(result[2].map(String)).to.deep.equal(expectedPrices.map(String))
     }).timeout(DEFAULT_TIMEOUT)
 })
+
+describe('Add a BUY order at the same level than an already existing one', function () {
+    it('should approve the spending for one  buy orders ', async function () {
+        
+
+        const buyCashAmount = buyAmount * bestBuyPrice
+
+        const buyCashAmountEth = ethers.parseUnits(
+            buyCashAmount.toString(),
+            18
+        )
+
+        const stoxContractForWallet = STOXContract.connect(
+            SIGNERS[usedWalletNbForSecondSameOrder]
+        )
+
+        // Approve the ORDERBOOKContract to spend tokens on behalf of this wallet
+        await stoxContractForWallet.approve(
+            ORDERBOOKContract.getAddress(),
+            buyCashAmountEth
+        )
+
+        // Verify approval (optional)
+        const allowance = await STOXContract.allowance(
+            SIGNERS[usedWalletNbForSecondSameOrder].address,
+            ORDERBOOKContract.getAddress()
+        )
+        console.log(
+            `Wallet ${SIGNERS[usedWalletNbForSecondSameOrder].address
+            } approved to spend ${ethers.formatUnits(
+                allowance,
+                18
+            )} STOX tokens for ORDERBOOKContract`
+        )
+
+        // Add assertions if needed
+        expect(allowance.toString()).to.equal(buyCashAmountEth.toString())
+    }).timeout(DEFAULT_TIMEOUT)
+
+    it('should submit 1 buy orders to execute the best sell order', async function () {
+        
+
+        const buyAmountEth = ethers.parseUnits(buyAmount.toString(), 18)
+        const buyPriceEth = ethers.parseUnits(
+            bestBuyPrice.toString(),
+            18
+        )
+
+        const orderBookContractForWallet = await ORDERBOOKContract.connect(
+            SIGNERS[usedWalletNbForSecondSameOrder]
+        )
+
+        // Send the buy order on behalf of this wallet
+        await orderBookContractForWallet.placeBuy(buyPriceEth, buyAmountEth)
+    }).timeout(DEFAULT_TIMEOUT)
+
+    it('should verify the output of getBuySide', async function () {
+        // Call the getBuySide function
+        const result = await ORDERBOOKContract.getBuySide()
+        console.log(result)
+
+        // Expected values
+        const expectedAddresses = [
+            SIGNERS[4].address,
+            SIGNERS[3].address,
+            SIGNERS[2].address,
+            SIGNERS[1].address,
+            SIGNERS[usedWalletNbForSecondSameOrder].address,
+        ]
+
+        const expectedAmounts = [
+            ethers.getBigInt('4000000000000000000'),
+            ethers.getBigInt('3000000000000000000'),
+            ethers.getBigInt('2000000000000000000'),
+            ethers.getBigInt('1000000000000000000'),
+            ethers.getBigInt('1000000000000000000'),
+        ]
+
+        const expectedPrices = [
+            ethers.getBigInt('4000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+        ]
+
+        // Verify addresses
+        expect(result[0]).to.deep.equal(expectedAddresses)
+
+        // Verify amounts
+        expect(result[1].map(String)).to.deep.equal(expectedAmounts.map(String))
+
+        // Verify prices
+        expect(result[2].map(String)).to.deep.equal(expectedPrices.map(String))
+    }).timeout(DEFAULT_TIMEOUT)
+})
+
