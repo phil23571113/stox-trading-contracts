@@ -46,6 +46,9 @@ contract Orderbook is Ownable2Step, ReentrancyGuard, Pausable {
     // mapping used for storing the outstanding balances of executed transactions currency
     mapping(address => uint256) currenciesBalance;
 
+    // Maximum safe value for the price of an order
+    uint256 constant MAX_INT = 2**255 - 1;
+
     // event emitted whenever a buy order is placed
     event BuyOrderPlaced(
         uint256 indexed price,
@@ -278,9 +281,9 @@ contract Orderbook is Ownable2Step, ReentrancyGuard, Pausable {
         nonReentrant
         whenNotPaused
     {
-        // Only striclty positive price are accepted
-        require(_price > 0, "Price must be strictly positive");
 
+
+        require(_price <= MAX_INT, "Price too large for safe conversion");
         // Only one buy order per address
         require(
             buyOrders[msg.sender].date == 0,
@@ -421,9 +424,8 @@ contract Orderbook is Ownable2Step, ReentrancyGuard, Pausable {
         nonReentrant
         whenNotPaused
     {
-        // Only striclty positive price are accepted
 
-        require(_price > 0, "Price must be strictly positive");
+        require(_price <= MAX_INT, "Price too large for safe conversion");
 
         // Only one sell order per address
         require(
@@ -722,7 +724,7 @@ contract Orderbook is Ownable2Step, ReentrancyGuard, Pausable {
             return;
         }
 
-        uint256 spread = bestSellPx - bestBuyPx;
+        int256 spread = int256(bestSellPx) - int256(bestBuyPx);
 
         if (spread <= 0) {
             // uint256 executionQty = _bestBuyQty > _bestSellQty ? _bestBuyQty - _bestSellQty : _bestSellQty - _bestBuyQty;
