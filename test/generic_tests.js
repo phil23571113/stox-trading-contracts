@@ -1,6 +1,8 @@
 const {expect} = require('chai')
 const { ethers } = require('hardhat');
 //const Web3 = require('web3')
+const { BigNumber } = require("ethers");
+
 
 let DEFAULT_TIMEOUT = 1000000
 let SIGNERS
@@ -97,7 +99,6 @@ describe('Distribute tokens', function () {
 describe('Fill order book with 4 BUY orders', function () {
 
     it('should approve the spending for 4 buy orders', async function () {
-        let signers = await ethers.getSigners()
         for (let x = 1; x < 5; x++) {
             const buyCashAmount = buyAmount * x
 
@@ -106,22 +107,22 @@ describe('Fill order book with 4 BUY orders', function () {
                 18
             )
 
-            const stoxContractForWallet = STOXContract.connect(signers[x])
+            const stoxContractForWallet = STOXContract.connect(SIGNERS[x])
 
             // Approve the ORDERBOOKContract to spend tokens on behalf of this wallet
             await stoxContractForWallet.approve(
-                ORDERBOOKContract.address,
+                ORDERBOOKContract.getAddress(),
                 buyCashAmountEth
             )
 
             // Verify approval (optional)
             const allowance = await STOXContract.allowance(
-                signers[x].address,
-                ORDERBOOKContract.address
+                SIGNERS[x].address,
+                ORDERBOOKContract.getAddress()
             )
             console.log(
                 `Wallet ${
-                    signers[x].address
+                    SIGNERS[x].address
                 } approved to spend ${ethers.formatUnits(
                     allowance,
                     18
@@ -134,7 +135,6 @@ describe('Fill order book with 4 BUY orders', function () {
     }).timeout(DEFAULT_TIMEOUT)
 
     it('should submit 4 buy orders to fill the order book with incremental prices', async function () {
-        let signers = await ethers.getSigners()
         for (let x = 1; x < 5; x++) {
             const buyAmountEth = ethers.parseUnits(
                 buyAmount.toString(),
@@ -143,7 +143,7 @@ describe('Fill order book with 4 BUY orders', function () {
             const buyPriceEth = ethers.parseUnits(x.toString(), 18)
 
             const orderBookContractForWallet = ORDERBOOKContract.connect(
-                signers[x]
+                SIGNERS[x]
             )
 
             // Send the buy order on behalf of this wallet
@@ -155,28 +155,27 @@ describe('Fill order book with 4 BUY orders', function () {
         // Call the getBuySide function
         const result = await ORDERBOOKContract.getBuySide()
         console.log(result)
-        let signers = await ethers.getSigners()
 
         // Expected values
         const expectedAddresses = [
-            signers[4].address,
-            signers[3].address,
-            signers[2].address,
-            signers[1].address,
+            SIGNERS[4].address,
+            SIGNERS[3].address,
+            SIGNERS[2].address,
+            SIGNERS[1].address,
         ]
 
         const expectedAmounts = [
-            ethers.BigNumber.from('4000000000000000000'),
-            ethers.BigNumber.from('3000000000000000000'),
-            ethers.BigNumber.from('2000000000000000000'),
-            ethers.BigNumber.from('1000000000000000000'),
+            ethers.getBigInt('4000000000000000000'),
+            ethers.getBigInt('3000000000000000000'),
+            ethers.getBigInt('2000000000000000000'),
+            ethers.getBigInt('1000000000000000000'),
         ]
 
         const expectedPrices = [
-            ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
         ]
 
         // Verify addresses
@@ -193,29 +192,28 @@ describe('Fill order book with 4 BUY orders', function () {
 describe('Fill order book with 4 SELL orders', function () {
 
     it('should approve the spending for 4 SELL orders', async function () {
-        let signers = await ethers.getSigners()
         for (let x = 1; x < 5; x++) {
             const sellAmountEth = ethers.parseUnits(
                 sellAmount.toString(),
                 18
             )
             console.log('sellAmountEth', sellAmountEth)
-            const nvdaContractForWallet = NVDAContract.connect(signers[x])
+            const nvdaContractForWallet = NVDAContract.connect(SIGNERS[x])
 
             // Approve the ORDERBOOKContract to spend tokens on behalf of this wallet
             await nvdaContractForWallet.approve(
-                ORDERBOOKContract.address,
+                ORDERBOOKContract.getAddress(),
                 sellAmountEth
             )
 
             // Verify approval (optional)
             const allowance = await NVDAContract.allowance(
-                signers[x].address,
-                ORDERBOOKContract.address
+                SIGNERS[x].address,
+                ORDERBOOKContract.getAddress()
             )
             console.log(
                 `Wallet ${
-                    signers[x].address
+                    SIGNERS[x].address
                 } approved to spend ${ethers.formatUnits(
                     allowance,
                     18
@@ -228,7 +226,6 @@ describe('Fill order book with 4 SELL orders', function () {
     }).timeout(DEFAULT_TIMEOUT)
 
     it('should submit 4 sell orders (equal respectively to the double of the buy orders) to fill the order book with incremental prices', async function () {
-        let signers = await ethers.getSigners()
 
         for (let x = 1; x < 5; x++) {
             // Define the sell price and amount
@@ -244,7 +241,7 @@ describe('Fill order book with 4 SELL orders', function () {
 
             // Connect the order book contract to the seller's account
             const orderBookContractForWallet = ORDERBOOKContract.connect(
-                signers[x]
+                SIGNERS[x]
             )
 
             // Place the sell order (price first, then amount)
@@ -257,7 +254,7 @@ describe('Fill order book with 4 SELL orders', function () {
             // const receipt = await tx.wait()
 
             // Log the transaction result
-            //console.log(`Sell order placed by ${signers[x].address}`)
+            //console.log(`Sell order placed by ${SIGNERS[x].address}`)
             //console.log('Transaction receipt:', receipt)
         }
     }).timeout(DEFAULT_TIMEOUT)
@@ -266,28 +263,27 @@ describe('Fill order book with 4 SELL orders', function () {
         // Call the getBuySide function
         const result = await ORDERBOOKContract.getSellSide()
         console.log(result)
-        let signers = await ethers.getSigners()
 
         // Expected values
         const expectedAddresses = [
-            signers[1].address,
-            signers[2].address,
-            signers[3].address,
-            signers[4].address,
+            SIGNERS[1].address,
+            SIGNERS[2].address,
+            SIGNERS[3].address,
+            SIGNERS[4].address,
         ]
 
         const expectedPrices = [
-            ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('20000000000000000000'),
-            ethers.BigNumber.from('30000000000000000000'),
-            ethers.BigNumber.from('40000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('20000000000000000000'),
+            ethers.getBigInt('30000000000000000000'),
+            ethers.getBigInt('40000000000000000000'),
         ]
 
         const expectedAmounts = [
-            ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
         ]
 
         // Verify addresses
@@ -303,10 +299,9 @@ describe('Fill order book with 4 SELL orders', function () {
 
 describe('Cancel orders', function () {
     it('should cancel one BUY order', async function () {
-        let signers = await ethers.getSigners()
 
         const orderBookContractForWallet = ORDERBOOKContract.connect(
-            signers[usedWalletNbForCancel]
+            SIGNERS[usedWalletNbForCancel]
         )
 
         // Send the buy order on behalf of this wallet
@@ -317,28 +312,27 @@ describe('Cancel orders', function () {
         // Call the getBuySide function
         const result = await ORDERBOOKContract.getBuySide()
         console.log(result)
-        let signers = await ethers.getSigners()
 
         // Expected values
         const expectedAddresses = [
-            signers[4].address,
-            signers[3].address,
-            //signers[2].address,
-            signers[1].address,
+            SIGNERS[4].address,
+            SIGNERS[3].address,
+            //SIGNERS[2].address,
+            SIGNERS[1].address,
         ]
 
         const expectedAmounts = [
-            ethers.BigNumber.from('4000000000000000000'),
-            ethers.BigNumber.from('3000000000000000000'),
-            //  ethers.BigNumber.from('2000000000000000000'),
-            ethers.BigNumber.from('1000000000000000000'),
+            ethers.getBigInt('4000000000000000000'),
+            ethers.getBigInt('3000000000000000000'),
+            //  ethers.getBigInt('2000000000000000000'),
+            ethers.getBigInt('1000000000000000000'),
         ]
 
         const expectedPrices = [
-            ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('10000000000000000000'),
-            // ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            // ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
         ]
 
         // Verify addresses
@@ -352,10 +346,10 @@ describe('Cancel orders', function () {
     }).timeout(DEFAULT_TIMEOUT)
 
     it('should cancel one SELL order', async function () {
-        let signers = await ethers.getSigners()
+        
 
         const orderBookContractForWallet = ORDERBOOKContract.connect(
-            signers[usedWalletNbForCancel]
+            SIGNERS[usedWalletNbForCancel]
         )
 
         // Send the buy order on behalf of this wallet
@@ -366,28 +360,28 @@ describe('Cancel orders', function () {
         // Call the getBuySide function
         const result = await ORDERBOOKContract.getSellSide()
         console.log(result)
-        let signers = await ethers.getSigners()
+        
 
         // Expected values
         const expectedAddresses = [
-            signers[1].address,
-            //signers[2].address,
-            signers[3].address,
-            signers[4].address,
+            SIGNERS[1].address,
+            //SIGNERS[2].address,
+            SIGNERS[3].address,
+            SIGNERS[4].address,
         ]
 
         const expectedPrices = [
-            ethers.BigNumber.from('10000000000000000000'),
-            //ethers.BigNumber.from('20000000000000000000'),
-            ethers.BigNumber.from('30000000000000000000'),
-            ethers.BigNumber.from('40000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            //ethers.getBigInt('20000000000000000000'),
+            ethers.getBigInt('30000000000000000000'),
+            ethers.getBigInt('40000000000000000000'),
         ]
 
         const expectedAmounts = [
-            ethers.BigNumber.from('10000000000000000000'),
-            //ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            //ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
         ]
 
         // Verify addresses
@@ -405,7 +399,7 @@ describe('Cancel orders', function () {
 describe('Fully execute the best sell side order', function () {    
 
     it('should approve the spending for one  buy orders that will fully execute the  best sell price', async function () {
-        let signers = await ethers.getSigners()
+        
 
         const buyCashAmount = buyAmount * bestSellPrice
 
@@ -415,23 +409,23 @@ describe('Fully execute the best sell side order', function () {
         )
 
         const stoxContractForWallet = STOXContract.connect(
-            signers[usedWalletNbForExecuteBestSell]
+            SIGNERS[usedWalletNbForExecuteBestSell]
         )
 
         // Approve the ORDERBOOKContract to spend tokens on behalf of this wallet
         await stoxContractForWallet.approve(
-            ORDERBOOKContract.address,
+            ORDERBOOKContract.getAddress(),
             buyCashAmountEth
         )
 
         // Verify approval (optional)
         const allowance = await STOXContract.allowance(
-            signers[usedWalletNbForExecuteBestSell].address,
-            ORDERBOOKContract.address
+            SIGNERS[usedWalletNbForExecuteBestSell].address,
+            ORDERBOOKContract.getAddress()
         )
         console.log(
             `Wallet ${
-                signers[usedWalletNbForExecuteBestSell].address
+                SIGNERS[usedWalletNbForExecuteBestSell].address
             } approved to spend ${ethers.formatUnits(
                 allowance,
                 18
@@ -443,7 +437,7 @@ describe('Fully execute the best sell side order', function () {
     }).timeout(DEFAULT_TIMEOUT)
 
     it('should submit 1 buy orders to execute the best sell order', async function () {
-        let signers = await ethers.getSigners()
+        
 
         const buyAmountEth = ethers.parseUnits(buyAmount.toString(), 18)
         const buyPriceEth = ethers.parseUnits(
@@ -452,7 +446,7 @@ describe('Fully execute the best sell side order', function () {
         )
 
         const orderBookContractForWallet = ORDERBOOKContract.connect(
-            signers[usedWalletNbForExecuteBestSell]
+            SIGNERS[usedWalletNbForExecuteBestSell]
         )
 
         // Send the buy order on behalf of this wallet
@@ -463,28 +457,28 @@ describe('Fully execute the best sell side order', function () {
         // Call the getBuySide function
         const result = await ORDERBOOKContract.getBuySide()
         console.log(result)
-        let signers = await ethers.getSigners()
+        
 
         // Expected values
         const expectedAddresses = [
-            signers[4].address,
-            signers[3].address,
-            //signers[2].address,
-            signers[1].address,
+            SIGNERS[4].address,
+            SIGNERS[3].address,
+            //SIGNERS[2].address,
+            SIGNERS[1].address,
         ]
 
         const expectedAmounts = [
-            ethers.BigNumber.from('4000000000000000000'),
-            ethers.BigNumber.from('3000000000000000000'),
-            // ethers.BigNumber.from('2000000000000000000'),
-            ethers.BigNumber.from('1000000000000000000'),
+            ethers.getBigInt('4000000000000000000'),
+            ethers.getBigInt('3000000000000000000'),
+            // ethers.getBigInt('2000000000000000000'),
+            ethers.getBigInt('1000000000000000000'),
         ]
 
         const expectedPrices = [
-            ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('10000000000000000000'),
-            // ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            // ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
         ]
 
         // Verify addresses
@@ -501,25 +495,25 @@ describe('Fully execute the best sell side order', function () {
         // Call the getBuySide function
         const result = await ORDERBOOKContract.getSellSide()
         console.log(result)
-        let signers = await ethers.getSigners()
+        
 
         // Expected values
         const expectedAddresses = [
-            //signers[2].address,
-            signers[3].address,
-            signers[4].address,
+            //SIGNERS[2].address,
+            SIGNERS[3].address,
+            SIGNERS[4].address,
         ]
 
         const expectedPrices = [
-            // ethers.BigNumber.from('20000000000000000000'),
-            ethers.BigNumber.from('30000000000000000000'),
-            ethers.BigNumber.from('40000000000000000000'),
+            // ethers.getBigInt('20000000000000000000'),
+            ethers.getBigInt('30000000000000000000'),
+            ethers.getBigInt('40000000000000000000'),
         ]
 
         const expectedAmounts = [
-            // ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('10000000000000000000'),
+            // ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
         ]
 
         // Verify addresses
@@ -533,10 +527,10 @@ describe('Fully execute the best sell side order', function () {
     }).timeout(DEFAULT_TIMEOUT)
 
     it('should verify the buyer can withdraw its securities', async function () {
-        let signers = await ethers.getSigners()
+        
 
         const orderBookContractForWallet = ORDERBOOKContract.connect(
-            signers[usedWalletNbForExecuteBestSell]
+            SIGNERS[usedWalletNbForExecuteBestSell]
         )
         // Send the buy order on behalf of this wallet
         const withdrawableSecurities =
@@ -551,10 +545,10 @@ describe('Fully execute the best sell side order', function () {
     }).timeout(DEFAULT_TIMEOUT)
 
     it('should verify the seller can withdraw its currencies', async function () {
-        // The seller whose order has been executed is signers[1]
-        let signers = await ethers.getSigners()
+        // The seller whose order has been executed is SIGNERS[1]
+        
 
-        const orderBookContractForWallet = ORDERBOOKContract.connect(signers[1])
+        const orderBookContractForWallet = ORDERBOOKContract.connect(SIGNERS[1])
         // Send the buy order on behalf of this wallet
         const withdrawableCurrencies =
             await orderBookContractForWallet.getWithdrawableCurrencies({
@@ -573,10 +567,10 @@ describe('Emergency Features Test', function () {
     }).timeout(DEFAULT_TIMEOUT)
 
     it('should try to cancel one SELL order', async function () {
-        let signers = await ethers.getSigners()
+        
 
         const orderBookContractForWallet = ORDERBOOKContract.connect(
-            signers[usedWalletNbForCancelWhilePaused]
+            SIGNERS[usedWalletNbForCancelWhilePaused]
         )
 
         // Send the buy order on behalf of this wallet
@@ -587,25 +581,25 @@ describe('Emergency Features Test', function () {
         // Call the getBuySide function
         const result = await ORDERBOOKContract.getSellSide()
         console.log(result)
-        let signers = await ethers.getSigners()
+        
 
         // Expected values
         const expectedAddresses = [
-            //signers[2].address,
-            signers[3].address,
-            signers[4].address,
+            //SIGNERS[2].address,
+            SIGNERS[3].address,
+            SIGNERS[4].address,
         ]
 
         const expectedPrices = [
-            // ethers.BigNumber.from('20000000000000000000'),
-            ethers.BigNumber.from('30000000000000000000'),
-            ethers.BigNumber.from('40000000000000000000'),
+            // ethers.getBigInt('20000000000000000000'),
+            ethers.getBigInt('30000000000000000000'),
+            ethers.getBigInt('40000000000000000000'),
         ]
 
         const expectedAmounts = [
-            // ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('10000000000000000000'),
+            // ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
         ]
 
         // Verify addresses
@@ -623,10 +617,10 @@ describe('Emergency Features Test', function () {
     }).timeout(DEFAULT_TIMEOUT)
 
     it('should try to cancel one SELL order', async function () {
-        let signers = await ethers.getSigners()
+        
 
         const orderBookContractForWallet = ORDERBOOKContract.connect(
-            signers[usedWalletNbForCancelWhilePaused]
+            SIGNERS[usedWalletNbForCancelWhilePaused]
         )
 
         // Send the buy order on behalf of this wallet
@@ -637,25 +631,25 @@ describe('Emergency Features Test', function () {
         // Call the getBuySide function
         const result = await ORDERBOOKContract.getSellSide()
         console.log(result)
-        let signers = await ethers.getSigners()
+        
 
         // Expected values
         const expectedAddresses = [
-            //signers[2].address,
-            //signers[3].address,
-            signers[4].address,
+            //SIGNERS[2].address,
+            //SIGNERS[3].address,
+            SIGNERS[4].address,
         ]
 
         const expectedPrices = [
-            // ethers.BigNumber.from('20000000000000000000'),
-            //ethers.BigNumber.from('30000000000000000000'),
-            ethers.BigNumber.from('40000000000000000000'),
+            // ethers.getBigInt('20000000000000000000'),
+            //ethers.getBigInt('30000000000000000000'),
+            ethers.getBigInt('40000000000000000000'),
         ]
 
         const expectedAmounts = [
-            // ethers.BigNumber.from('10000000000000000000'),
-            // ethers.BigNumber.from('10000000000000000000'),
-            ethers.BigNumber.from('10000000000000000000'),
+            // ethers.getBigInt('10000000000000000000'),
+            // ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
         ]
 
         // Verify addresses
