@@ -444,7 +444,6 @@ describe('Control unauthorized admin acces prevention', function () {
     }).timeout(DEFAULT_TIMEOUT)
 })
 
-//TODO: Check why reversion is not detected
 describe('Prevent cancelling an order that does not exist', function () {
     it('should try to cancel one SELL order', async function () {
         const contractAsNonOrderOwner = ORDERBOOKContract.connect(SIGNERS[8])
