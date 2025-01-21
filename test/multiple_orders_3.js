@@ -21,7 +21,7 @@ let fullBuyExecAmount = 60
 
 
 describe('Retrieve Connected Signers', function () {
-     it('retrieve the connected  signers', async function () {
+    it('retrieve the connected  signers', async function () {
         SIGNERS = await ethers.getSigners()
     }).timeout(DEFAULT_TIMEOUT)
 })
@@ -123,8 +123,7 @@ describe('Fill order book with 4 BUY orders', function () {
                 ORDERBOOKContract.getAddress()
             )
             console.log(
-                `Wallet ${
-                    SIGNERS[x].address
+                `Wallet ${SIGNERS[x].address
                 } approved to spend ${ethers.formatUnits(
                     allowance,
                     18
@@ -214,8 +213,7 @@ describe('Fill order book with 4 SELL orders', function () {
                 ORDERBOOKContract.getAddress()
             )
             console.log(
-                `Wallet ${
-                    SIGNERS[x].address
+                `Wallet ${SIGNERS[x].address
                 } approved to spend ${ethers.formatUnits(
                     allowance,
                     18
@@ -301,7 +299,7 @@ describe('Fill order book with 4 SELL orders', function () {
 
 describe('Fully execute the BUY side of the order book with a large SELL order', function () {
 
-  it('should approve the spending for one  SELL order', async function () {
+    it('should approve the spending for one  SELL order', async function () {
 
         const fullBuyExecAmountEth = ethers.parseUnits(
             fullBuyExecAmount.toString(),
@@ -366,10 +364,10 @@ describe('Fully execute the BUY side of the order book with a large SELL order',
         const expectedAmounts = []
 
         // Verify addresses
-    expect(expectedAddresses).to.deep.equal(result[0])
+        expect(expectedAddresses).to.deep.equal(result[0])
 
         // Verify amounts
-       expect(expectedPrices.map(String)).to.deep.equal(result[1].map(String))
+        expect(expectedPrices.map(String)).to.deep.equal(result[1].map(String))
 
         // Verify prices
         expect(expectedAmounts.map(String)).to.deep.equal(result[2].map(String))
@@ -377,44 +375,56 @@ describe('Fully execute the BUY side of the order book with a large SELL order',
 
 
     it('should verify the output of getSellSide', async function () {
-            // Call the getBuySide function
-            const result = await ORDERBOOKContract.getSellSide()
-            console.log(result)
-    
-            // Expected values
-            const expectedAddresses = [
-                SIGNERS[usedWalletForFullBuyexecution].address,
-                SIGNERS[1].address,
-                SIGNERS[2].address,
-                SIGNERS[3].address,
-                SIGNERS[4].address,
-            ]
-    
-            const expectedPrices = [
-                ethers.getBigInt('1000000000000000000'),
-                ethers.getBigInt('10000000000000000000'),
-                ethers.getBigInt('20000000000000000000'),
-                ethers.getBigInt('30000000000000000000'),
-                ethers.getBigInt('40000000000000000000'),
-            ]
-    
-            const expectedAmounts = [
-                ethers.getBigInt('20000000000000000000'),
-                ethers.getBigInt('10000000000000000000'),
-                ethers.getBigInt('10000000000000000000'),
-                ethers.getBigInt('10000000000000000000'),
-                ethers.getBigInt('10000000000000000000'),
-            ]
-    
-            // Verify addresses
-            expect(result[0]).to.deep.equal(expectedAddresses)
-    
-            // Verify amounts
-            expect(result[1].map(String)).to.deep.equal(expectedPrices.map(String))
-    
-            // Verify prices
-            expect(result[2].map(String)).to.deep.equal(expectedAmounts.map(String))
-        }).timeout(DEFAULT_TIMEOUT)
+        // Call the getBuySide function
+        const result = await ORDERBOOKContract.getSellSide()
+        console.log(result)
 
+        // Expected values
+        const expectedAddresses = [
+            SIGNERS[usedWalletForFullBuyexecution].address,
+            SIGNERS[1].address,
+            SIGNERS[2].address,
+            SIGNERS[3].address,
+            SIGNERS[4].address,
+        ]
+
+        const expectedPrices = [
+            ethers.getBigInt('1000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('20000000000000000000'),
+            ethers.getBigInt('30000000000000000000'),
+            ethers.getBigInt('40000000000000000000'),
+        ]
+
+        const expectedAmounts = [
+            ethers.getBigInt('20000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+            ethers.getBigInt('10000000000000000000'),
+        ]
+
+        // Verify addresses
+        expect(result[0]).to.deep.equal(expectedAddresses)
+
+        // Verify amounts
+        expect(result[1].map(String)).to.deep.equal(expectedPrices.map(String))
+
+        // Verify prices
+        expect(result[2].map(String)).to.deep.equal(expectedAmounts.map(String))
+    }).timeout(DEFAULT_TIMEOUT)
+
+    it('should verify the SELLER can withdraw its CURRENCIES', async function () {
+        const orderBookContractForWallet = ORDERBOOKContract.connect(
+            SIGNERS[usedWalletForFullBuyexecution])
+        const withdrawableCurrencies =
+            await orderBookContractForWallet.getWithdrawableCurrencies({
+                gasLimit: 500000,
+            })
+        console.log(withdrawableCurrencies)
+        expect(withdrawableCurrencies.toString()).to.equal(
+            ethers.parseUnits((40).toString(), 18)
+        )
+    }).timeout(DEFAULT_TIMEOUT)
 
 });
