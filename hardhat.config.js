@@ -19,5 +19,20 @@ module.exports = {
 
   },
   defaultNetwork: 'hardhat',
+  etherscan: {
+    apiKey: {
+     "base-sepolia": "YRJIX95DR341PB9QB39FW1HXWMXPZUQUW8"
+    },
+    customChains: [
+      {
+        network: "base-sepolia",
+        chainId: 84532,
+        urls: {
+         apiURL: "https://api-sepolia.basescan.org/api",
+         browserURL: "https://sepolia.basescan.org"
+        }
+      }
+    ]
+  },
 };
 
