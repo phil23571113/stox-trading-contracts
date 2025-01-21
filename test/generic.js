@@ -1,4 +1,4 @@
-const {expect} = require('chai')
+const { expect } = require('chai')
 const { ethers } = require('hardhat');
 const { BigNumber } = require("ethers");
 
@@ -18,7 +18,7 @@ let usedWalletNbForCancelWhilePaused = 3
 let bestSellPrice = 10
 
 describe('Retrieve Connected Signers', function () {
-     it('retrieve the connected  signers', async function () {
+    it('retrieve the connected  signers', async function () {
         SIGNERS = await ethers.getSigners()
     }).timeout(DEFAULT_TIMEOUT)
 })
@@ -120,8 +120,7 @@ describe('Fill order book with 4 BUY orders', function () {
                 ORDERBOOKContract.getAddress()
             )
             console.log(
-                `Wallet ${
-                    SIGNERS[x].address
+                `Wallet ${SIGNERS[x].address
                 } approved to spend ${ethers.formatUnits(
                     allowance,
                     18
@@ -211,8 +210,7 @@ describe('Fill order book with 4 SELL orders', function () {
                 ORDERBOOKContract.getAddress()
             )
             console.log(
-                `Wallet ${
-                    SIGNERS[x].address
+                `Wallet ${SIGNERS[x].address
                 } approved to spend ${ethers.formatUnits(
                     allowance,
                     18
@@ -345,7 +343,7 @@ describe('Cancel orders', function () {
     }).timeout(DEFAULT_TIMEOUT)
 
     it('should cancel one SELL order', async function () {
-        
+
 
         const orderBookContractForWallet = ORDERBOOKContract.connect(
             SIGNERS[usedWalletNbForCancel]
@@ -359,7 +357,7 @@ describe('Cancel orders', function () {
         // Call the getBuySide function
         const result = await ORDERBOOKContract.getSellSide()
         console.log(result)
-        
+
 
         // Expected values
         const expectedAddresses = [
@@ -395,10 +393,10 @@ describe('Cancel orders', function () {
 
 })
 
-describe('Fully execute the best sell side order', function () {    
+describe('Fully execute the best sell side order', function () {
 
     it('should approve the spending for one  buy orders that will fully execute the  best sell price', async function () {
-        
+
 
         const buyCashAmount = buyAmount * bestSellPrice
 
@@ -423,8 +421,7 @@ describe('Fully execute the best sell side order', function () {
             ORDERBOOKContract.getAddress()
         )
         console.log(
-            `Wallet ${
-                SIGNERS[usedWalletNbForExecuteBestSell].address
+            `Wallet ${SIGNERS[usedWalletNbForExecuteBestSell].address
             } approved to spend ${ethers.formatUnits(
                 allowance,
                 18
@@ -436,7 +433,7 @@ describe('Fully execute the best sell side order', function () {
     }).timeout(DEFAULT_TIMEOUT)
 
     it('should submit 1 buy orders to execute the best sell order', async function () {
-        
+
 
         const buyAmountEth = ethers.parseUnits(buyAmount.toString(), 18)
         const buyPriceEth = ethers.parseUnits(
@@ -456,7 +453,7 @@ describe('Fully execute the best sell side order', function () {
         // Call the getBuySide function
         const result = await ORDERBOOKContract.getBuySide()
         console.log(result)
-        
+
 
         // Expected values
         const expectedAddresses = [
@@ -494,7 +491,7 @@ describe('Fully execute the best sell side order', function () {
         // Call the getBuySide function
         const result = await ORDERBOOKContract.getSellSide()
         console.log(result)
-        
+
 
         // Expected values
         const expectedAddresses = [
@@ -526,18 +523,13 @@ describe('Fully execute the best sell side order', function () {
     }).timeout(DEFAULT_TIMEOUT)
 
     it('should verify the buyer can withdraw its securities', async function () {
-        
-
         const orderBookContractForWallet = ORDERBOOKContract.connect(
-            SIGNERS[usedWalletNbForExecuteBestSell]
-        )
-        // Send the buy order on behalf of this wallet
+            SIGNERS[usedWalletNbForExecuteBestSell])
         const withdrawableSecurities =
             await orderBookContractForWallet.getWithdrawableSecurities({
                 gasLimit: 500000,
             })
         console.log(withdrawableSecurities)
-
         expect(withdrawableSecurities.toString()).to.equal(
             ethers.parseUnits(buyAmount.toString(), 18)
         )
@@ -545,7 +537,7 @@ describe('Fully execute the best sell side order', function () {
 
     it('should verify the seller can withdraw its currencies', async function () {
         // The seller whose order has been executed is SIGNERS[1]
-        
+
 
         const orderBookContractForWallet = ORDERBOOKContract.connect(SIGNERS[1])
         // Send the buy order on behalf of this wallet
@@ -566,16 +558,16 @@ describe('Emergency Features Test', function () {
     }).timeout(DEFAULT_TIMEOUT)
 
     it('should try to cancel one SELL order', async function () {
-        
+
 
         const orderBookContractForWallet = ORDERBOOKContract.connect(
             SIGNERS[usedWalletNbForCancelWhilePaused]
         )
 
         // Send the buy order on behalf of this wallet
-        
+
         await expect(
-            orderBookContractForWallet.cancelSell({gasLimit: 500000})
+            orderBookContractForWallet.cancelSell({ gasLimit: 500000 })
         ).to.be.reverted;
 
 
@@ -585,7 +577,7 @@ describe('Emergency Features Test', function () {
         // Call the getBuySide function
         const result = await ORDERBOOKContract.getSellSide()
         console.log(result)
-        
+
 
         // Expected values
         const expectedAddresses = [
@@ -621,21 +613,21 @@ describe('Emergency Features Test', function () {
     }).timeout(DEFAULT_TIMEOUT)
 
     it('should try to cancel one SELL order', async function () {
-        
+
 
         const orderBookContractForWallet = ORDERBOOKContract.connect(
             SIGNERS[usedWalletNbForCancelWhilePaused]
         )
 
         // Send the buy order on behalf of this wallet
-        await orderBookContractForWallet.cancelSell({gasLimit: 500000})
+        await orderBookContractForWallet.cancelSell({ gasLimit: 500000 })
     }).timeout(DEFAULT_TIMEOUT)
 
     it('should verify that the output of getSellSide has  changed', async function () {
         // Call the getBuySide function
         const result = await ORDERBOOKContract.getSellSide()
         console.log(result)
-        
+
 
         // Expected values
         const expectedAddresses = [
