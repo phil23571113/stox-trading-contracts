@@ -1,9 +1,3 @@
-/* TODO:
-
-    - submit order with the same price
-    - execute two orders with the same price
- */
-
 const { expect } = require('chai')
 const { ethers } = require('hardhat');
 const { BigNumber } = require("ethers");

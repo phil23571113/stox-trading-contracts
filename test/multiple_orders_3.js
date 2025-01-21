@@ -13,22 +13,12 @@ let distributedAmount = ethers.parseUnits('100', 18) // 100 tokens with 18 decim
 let buyAmount = 10
 let sellAmount = 10
 
-/* Partial Execution from BUY */
-let bestSellPrice = 10
-let usedWalletNbForExecuteBestSell = 5
-let partialBuyAmount = 7
+/* Full exec of the BUY side */
+let usedWalletForFullBuyexecution = 5
+let fullBuyExecPrice = 1
+let fullBuyExecAmount = 60
 
-/* Partial Execution from SELL */
-let bestBuyPrice = 1
-let usedWalletNbForExecuteBestBuy = 5
-let partialSellAmount = 6
 
-/* Add an order at an already existing price */
-let usedWalletNbForSecondSameOrder = 6
-
-/* Scenario when 1 order executes against 2 opposite orders with the same price */
-let partialSellAmountAgainstTwo = 12
-let usedWalletPartialSellAmountAgainstTwo = 7
 
 describe('Retrieve Connected Signers', function () {
      it('retrieve the connected  signers', async function () {
@@ -309,125 +299,32 @@ describe('Fill order book with 4 SELL orders', function () {
     }).timeout(DEFAULT_TIMEOUT)
 })
 
-describe('Partially execute the first SELL order', function () {
-    it('should approve the spending for one  buy orders that will partially execute the  best sell price', async function () {
-        
+describe('Fully execute the BUY side of the order book with a large SELL order', function () {
 
-        const buyCashAmount = buyAmount * bestSellPrice
+  it('should approve the spending for one  SELL order', async function () {
 
-        const buyCashAmountEth = ethers.parseUnits(
-            buyCashAmount.toString(),
-            18
-        )
-
-        const stoxContractForWallet = STOXContract.connect(
-            SIGNERS[usedWalletNbForExecuteBestSell]
-        )
-
-        // Approve the ORDERBOOKContract to spend tokens on behalf of this wallet
-        await stoxContractForWallet.approve(
-            ORDERBOOKContract.getAddress(),
-            buyCashAmountEth
-        )
-
-        // Verify approval (optional)
-        const allowance = await STOXContract.allowance(
-            SIGNERS[usedWalletNbForExecuteBestSell].address,
-            ORDERBOOKContract.getAddress()
-        )
-        console.log(
-            `Wallet ${SIGNERS[usedWalletNbForExecuteBestSell].address
-            } approved to spend ${ethers.formatUnits(
-                allowance,
-                18
-            )} STOX tokens for ORDERBOOKContract`
-        )
-
-        // Add assertions if needed
-        expect(allowance.toString()).to.equal(buyCashAmountEth.toString())
-    }).timeout(DEFAULT_TIMEOUT)
-
-    it('should submit 1 buy orders to execute the best sell order', async function () {
-        
-
-        const buyAmountEth = ethers.parseUnits(partialBuyAmount.toString(), 18)
-        const buyPriceEth = ethers.parseUnits(
-            bestSellPrice.toString(),
-            18
-        )
-
-        const orderBookContractForWallet = await ORDERBOOKContract.connect(
-            SIGNERS[usedWalletNbForExecuteBestSell]
-        )
-
-        // Send the buy order on behalf of this wallet
-        await orderBookContractForWallet.placeBuy(buyPriceEth, buyAmountEth)
-    }).timeout(DEFAULT_TIMEOUT)
-
-    it('should verify the output of getSellSide', async function () {
-        // Call the getBuySide function
-        const result = await ORDERBOOKContract.getSellSide()
-        console.log(result)
-
-        // Expected values
-        const expectedAddresses = [
-            SIGNERS[1].address,
-            SIGNERS[2].address,
-            SIGNERS[3].address,
-            SIGNERS[4].address,
-        ]
-
-        const expectedPrices = [
-            ethers.getBigInt('10000000000000000000'),
-            ethers.getBigInt('20000000000000000000'),
-            ethers.getBigInt('30000000000000000000'),
-            ethers.getBigInt('40000000000000000000'),
-        ]
-
-        const expectedAmounts = [
-            ethers.getBigInt('3000000000000000000'), // 7 units have been executed 
-            ethers.getBigInt('10000000000000000000'),
-            ethers.getBigInt('10000000000000000000'),
-            ethers.getBigInt('10000000000000000000'),
-        ]
-
-        // Verify addresses
-        expect(result[0]).to.deep.equal(expectedAddresses)
-
-        // Verify amounts
-        expect(result[1].map(String)).to.deep.equal(expectedPrices.map(String))
-
-        // Verify prices
-        expect(result[2].map(String)).to.deep.equal(expectedAmounts.map(String))
-    }).timeout(DEFAULT_TIMEOUT)
-})
-
-
-describe('Partially execute the first BUY order', function () {
-    it('should approve the spending for one  SELL orders that will partially execute the  best buy price', async function () {
-
-        const partialSellAmountEth = ethers.parseUnits(
-            partialSellAmount.toString(),
+        const fullBuyExecAmountEth = ethers.parseUnits(
+            fullBuyExecAmount.toString(),
             18
         )
 
         const nvdaContractForWallet = NVDAContract.connect(
-            SIGNERS[usedWalletNbForExecuteBestBuy]
+            SIGNERS[usedWalletForFullBuyexecution]
         )
 
         // Approve the ORDERBOOKContract to spend tokens on behalf of this wallet
         await nvdaContractForWallet.approve(
             ORDERBOOKContract.getAddress(),
-            partialSellAmountEth
+            fullBuyExecAmountEth
         )
 
         // Verify approval (optional)
         const allowance = await NVDAContract.allowance(
-            SIGNERS[usedWalletNbForExecuteBestBuy].address,
+            SIGNERS[usedWalletForFullBuyexecution].address,
             ORDERBOOKContract.getAddress()
         )
         console.log(
-            `Wallet ${SIGNERS[usedWalletNbForExecuteBestBuy].address
+            `Wallet ${SIGNERS[usedWalletForFullBuyexecution].address
             } approved to spend ${ethers.formatUnits(
                 allowance,
                 18
@@ -435,26 +332,26 @@ describe('Partially execute the first BUY order', function () {
         )
 
         // Add assertions if needed
-        expect(allowance.toString()).to.equal(partialSellAmountEth.toString())
+        expect(allowance.toString()).to.equal(fullBuyExecAmountEth.toString())
     }).timeout(DEFAULT_TIMEOUT)
 
-    it('should submit 1 SELL orders to execute the best buy order', async function () {
+    it('should submit one SELL order', async function () {
 
-        const partialSellAmountEth = ethers.parseUnits(
-            partialSellAmount.toString(),
+        const fullBuyExecAmountEth = ethers.parseUnits(
+            fullBuyExecAmount.toString(),
             18
         )
-        const sellPriceEth = ethers.parseUnits(
-            bestBuyPrice.toString(),
+        const fullBuyExecPriceEth = ethers.parseUnits(
+            fullBuyExecPrice.toString(),
             18
         )
 
         const orderBookContractForWallet = await ORDERBOOKContract.connect(
-            SIGNERS[usedWalletNbForExecuteBestBuy]
+            SIGNERS[usedWalletForFullBuyexecution]
         )
 
         // Send the SELL order on behalf of this wallet
-        await orderBookContractForWallet.placeSell(sellPriceEth, partialSellAmountEth)
+        await orderBookContractForWallet.placeSell(fullBuyExecPriceEth, fullBuyExecAmountEth)
 
     }).timeout(DEFAULT_TIMEOUT)
 
@@ -463,132 +360,61 @@ describe('Partially execute the first BUY order', function () {
         const result = await ORDERBOOKContract.getBuySide()
         console.log(result)
 
-        // Expected values
-        const expectedAddresses = [
-            SIGNERS[4].address,
-            SIGNERS[3].address,
-            SIGNERS[2].address,
-            SIGNERS[1].address,
-        ]
-
-        const expectedAmounts = [
-            ethers.getBigInt('4000000000000000000'),
-            ethers.getBigInt('3000000000000000000'),
-            ethers.getBigInt('2000000000000000000'),
-            ethers.getBigInt('1000000000000000000'),
-        ]
-
-        const expectedPrices = [
-            ethers.getBigInt('4000000000000000000'), // 6 units have been executed , 4 remaining
-            ethers.getBigInt('10000000000000000000'),
-            ethers.getBigInt('10000000000000000000'),
-            ethers.getBigInt('10000000000000000000'),
-        ]
+        // Expected values (the BUY side should be empty - fully executed)
+        const expectedAddresses = []
+        const expectedPrices = []
+        const expectedAmounts = []
 
         // Verify addresses
-        expect(result[0]).to.deep.equal(expectedAddresses)
+    expect(expectedAddresses).to.deep.equal(result[0])
 
         // Verify amounts
-        expect(result[1].map(String)).to.deep.equal(expectedAmounts.map(String))
+       expect(expectedPrices.map(String)).to.deep.equal(result[1].map(String))
 
         // Verify prices
-        expect(result[2].map(String)).to.deep.equal(expectedPrices.map(String))
-    }).timeout(DEFAULT_TIMEOUT)
-})
-
-describe('Add a BUY order at the same level than an already existing one', function () {
-    it('should approve the spending for one  buy orders ', async function () {
-        
-
-        const buyCashAmount = buyAmount * bestBuyPrice
-
-        const buyCashAmountEth = ethers.parseUnits(
-            buyCashAmount.toString(),
-            18
-        )
-
-        const stoxContractForWallet = STOXContract.connect(
-            SIGNERS[usedWalletNbForSecondSameOrder]
-        )
-
-        // Approve the ORDERBOOKContract to spend tokens on behalf of this wallet
-        await stoxContractForWallet.approve(
-            ORDERBOOKContract.getAddress(),
-            buyCashAmountEth
-        )
-
-        // Verify approval (optional)
-        const allowance = await STOXContract.allowance(
-            SIGNERS[usedWalletNbForSecondSameOrder].address,
-            ORDERBOOKContract.getAddress()
-        )
-        console.log(
-            `Wallet ${SIGNERS[usedWalletNbForSecondSameOrder].address
-            } approved to spend ${ethers.formatUnits(
-                allowance,
-                18
-            )} STOX tokens for ORDERBOOKContract`
-        )
-
-        // Add assertions if needed
-        expect(allowance.toString()).to.equal(buyCashAmountEth.toString())
+        expect(expectedAmounts.map(String)).to.deep.equal(result[2].map(String))
     }).timeout(DEFAULT_TIMEOUT)
 
-    it('should submit 1 buy orders to execute the best sell order', async function () {
-        
 
-        const buyAmountEth = ethers.parseUnits(buyAmount.toString(), 18)
-        const buyPriceEth = ethers.parseUnits(
-            bestBuyPrice.toString(),
-            18
-        )
+    it('should verify the output of getSellSide', async function () {
+            // Call the getBuySide function
+            const result = await ORDERBOOKContract.getSellSide()
+            console.log(result)
+    
+            // Expected values
+            const expectedAddresses = [
+                SIGNERS[usedWalletForFullBuyexecution].address,
+                SIGNERS[1].address,
+                SIGNERS[2].address,
+                SIGNERS[3].address,
+                SIGNERS[4].address,
+            ]
+    
+            const expectedPrices = [
+                ethers.getBigInt('1000000000000000000'),
+                ethers.getBigInt('10000000000000000000'),
+                ethers.getBigInt('20000000000000000000'),
+                ethers.getBigInt('30000000000000000000'),
+                ethers.getBigInt('40000000000000000000'),
+            ]
+    
+            const expectedAmounts = [
+                ethers.getBigInt('20000000000000000000'),
+                ethers.getBigInt('10000000000000000000'),
+                ethers.getBigInt('10000000000000000000'),
+                ethers.getBigInt('10000000000000000000'),
+                ethers.getBigInt('10000000000000000000'),
+            ]
+    
+            // Verify addresses
+            expect(result[0]).to.deep.equal(expectedAddresses)
+    
+            // Verify amounts
+            expect(result[1].map(String)).to.deep.equal(expectedPrices.map(String))
+    
+            // Verify prices
+            expect(result[2].map(String)).to.deep.equal(expectedAmounts.map(String))
+        }).timeout(DEFAULT_TIMEOUT)
 
-        const orderBookContractForWallet = await ORDERBOOKContract.connect(
-            SIGNERS[usedWalletNbForSecondSameOrder]
-        )
 
-        // Send the buy order on behalf of this wallet
-        await orderBookContractForWallet.placeBuy(buyPriceEth, buyAmountEth)
-    }).timeout(DEFAULT_TIMEOUT)
-
-    it('should verify the output of getBuySide', async function () {
-        // Call the getBuySide function
-        const result = await ORDERBOOKContract.getBuySide()
-        console.log(result)
-
-        // Expected values
-        const expectedAddresses = [
-            SIGNERS[4].address,
-            SIGNERS[3].address,
-            SIGNERS[2].address,
-            SIGNERS[1].address,
-            SIGNERS[usedWalletNbForSecondSameOrder].address,
-        ]
-
-        const expectedAmounts = [
-            ethers.getBigInt('4000000000000000000'),
-            ethers.getBigInt('3000000000000000000'),
-            ethers.getBigInt('2000000000000000000'),
-            ethers.getBigInt('1000000000000000000'),
-            ethers.getBigInt('1000000000000000000'),
-        ]
-
-        const expectedPrices = [
-            ethers.getBigInt('4000000000000000000'),
-            ethers.getBigInt('10000000000000000000'),
-            ethers.getBigInt('10000000000000000000'),
-            ethers.getBigInt('10000000000000000000'),
-            ethers.getBigInt('10000000000000000000'),
-        ]
-
-        // Verify addresses
-        expect(result[0]).to.deep.equal(expectedAddresses)
-
-        // Verify amounts
-        expect(result[1].map(String)).to.deep.equal(expectedAmounts.map(String))
-
-        // Verify prices
-        expect(result[2].map(String)).to.deep.equal(expectedPrices.map(String))
-    }).timeout(DEFAULT_TIMEOUT)
-})
-
+});
