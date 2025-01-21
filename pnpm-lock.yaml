@@ -12,6 +12,7 @@ specifiers:
   '@typechain/ethers-v6': ^0.5.0
   '@typechain/hardhat': ^9.0.0
   chai: ^4.2.0
+  dotenv: ^16.4.7
   ethers: ^6.4.0
   hardhat: ^2.22.18
   hardhat-gas-reporter: ^1.0.8
@@ -32,6 +33,7 @@ devDependencies:
   '@typechain/ethers-v6': 0.5.1_ethers@6.13.5+typechain@8.3.2
   '@typechain/hardhat': 9.1.0_97c12454fa6ebfece90cab680ec602f4
   chai: 4.5.0
+  dotenv: 16.4.7
   ethers: 6.13.5
   hardhat: 2.22.18
   hardhat-gas-reporter: 1.0.10_hardhat@2.22.18
@@ -1612,6 +1614,11 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       path-type: 4.0.0
+    dev: true
+
+  /dotenv/16.4.7:
+    resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
+    engines: {node: '>=12'}
     dev: true
 
   /dunder-proto/1.0.1:
