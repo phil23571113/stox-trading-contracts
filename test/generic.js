@@ -9,9 +9,9 @@ let SIGNERS
 let STOXContract
 let NVDAContract
 let ORDERBOOKContract
-let distributedAmount = ethers.parseUnits('100', 18) // 100 tokens with 18 decimals
-let buyAmount = 10
-let sellAmount = 10
+let distributedAmount = ethers.parseUnits('1000', 18) // 100 tokens with 18 decimals
+let buyAmount = 2
+let sellAmount = 2
 let usedWalletNbForCancel = 2
 let usedWalletNbForExecuteBestSell = 5
 let usedWalletNbForCancelWhilePaused = 3

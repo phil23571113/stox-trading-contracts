@@ -16,6 +16,16 @@ module.exports = {
       accounts: ["d232238eb6ddf9989203b86d7c3eb00f7d4d70422d4a52e3f733234a0a9636f0"],
       gasPrice: 1000000000,
     },
+    'sepolia': {
+      url: 'https://sepolia.infura.io/v3/b61e0acf297f4ecb83eb60c867225215',
+      accounts: ["d232238eb6ddf9989203b86d7c3eb00f7d4d70422d4a52e3f733234a0a9636f0"],
+      gasPrice: 1000000000,
+    },
+    'unichain-sepolia': {
+      url: '	https://sepolia.unichain.org',
+      accounts: ["d232238eb6ddf9989203b86d7c3eb00f7d4d70422d4a52e3f733234a0a9636f0"],
+      gasPrice: 1000000000,
+    },
 
   },
   defaultNetwork: 'hardhat',
