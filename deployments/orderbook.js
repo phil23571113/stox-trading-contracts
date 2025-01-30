@@ -6,7 +6,7 @@ const { ethers } = require('hardhat');
 
 async function main() {
     this.ORDERBOOKContractFactory = await ethers.getContractFactory('Orderbook')
-    ORDERBOOKContract = await this.ORDERBOOKContractFactory.deploy("0xE03Ed0EFa26e418648668735FF3F6C66C923A840", "0x6A8574a2159E3ADa503147F816a917cD235E5c18")
+    ORDERBOOKContract = await this.ORDERBOOKContractFactory.deploy("0x8b5cD3355CfBC3864DdDf85d0660E0e53579aA61", "0xF854f51CA4A488a01b41278a0B3D66Aec2BB94b6")
     await ORDERBOOKContract.waitForDeployment()
     console.log('Order Book deployed to:', await ORDERBOOKContract.target)
 }

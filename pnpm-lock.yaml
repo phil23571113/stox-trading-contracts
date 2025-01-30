@@ -55,7 +55,7 @@ importers:
         specifier: ^16.4.7
         version: 16.4.7
       ethers:
-        specifier: ^6.4.0
+        specifier: ^6.13.5
         version: 6.13.5
       hardhat:
         specifier: ^2.22.18

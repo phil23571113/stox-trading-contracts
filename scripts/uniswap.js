@@ -49,39 +49,46 @@ async function getPoolReserves(poolAddress) {
         
         // Get token info
         const token0Decimals = await token0Contract.decimals();
-        console.log("token0Decimals",token0Decimals);
+        console.log("token0Decimals", token0Decimals);
         const token1Decimals = await token1Contract.decimals();
-        console.log("token1Decimals",token1Decimals);
+        console.log("token1Decimals", token1Decimals);
         const token0Symbol = await token0Contract.symbol();
-        console.log("token0Symbol",token0Symbol);
+        console.log("token0Symbol", token0Symbol);
         const token1Symbol = await token1Contract.symbol();
-        console.log("token1Symbol",token1Symbol);
+        console.log("token1Symbol", token1Symbol);
         
         // Get current liquidity and price
         const liquidity = await poolContract.liquidity();
-        console.log("liquidity",liquidity);
+        console.log("liquidity", liquidity);
         const slot0 = await poolContract.slot0();
-        console.log("slot0",slot0);
+        console.log("slot0", slot0);
         const sqrtPriceX96 = slot0[0];
+        console.log("sqrtPriceX96", sqrtPriceX96);
         
         // Calculate reserves using sqrt price and liquidity
-        const Q96 = ethers.BigNumber.from('2').pow(96);
-        const sqrtPrice = sqrtPriceX96.div(Q96);
+        const Q96 = BigInt(2) ** BigInt(96);  // Using BigInt instead of BigNumber
+
+        console.log("Q96", Q96);
+        const sqrtPrice = sqrtPriceX96 / Q96;
         
         // Calculate reserves using Uniswap V3 formulas
-        const token0Reserve = liquidity.mul(Q96).div(sqrtPriceX96);
-        const token1Reserve = liquidity.mul(sqrtPriceX96).div(Q96);
+        // Convert values to BigInt for calculations
+        const liquidityBI = BigInt(liquidity.toString());
+        const sqrtPriceX96BI = BigInt(sqrtPriceX96.toString());
+        
+        const token0Reserve = (liquidityBI * Q96) / sqrtPriceX96BI;
+        const token1Reserve = (liquidityBI * sqrtPriceX96BI) / Q96;
         
         return {
             token0: {
                 address: token0Address,
                 symbol: token0Symbol,
-                reserve: ethers.utils.formatUnits(token0Reserve, token0Decimals),
+                reserve: ethers.formatUnits(token0Reserve.toString(), token0Decimals),
             },
             token1: {
                 address: token1Address,
                 symbol: token1Symbol,
-                reserve: ethers.utils.formatUnits(token1Reserve, token1Decimals),
+                reserve: ethers.formatUnits(token1Reserve.toString(), token1Decimals),
             },
             poolAddress
         };
