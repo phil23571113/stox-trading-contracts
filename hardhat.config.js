@@ -4,6 +4,8 @@ require("@nomicfoundation/hardhat-toolbox");
 module.exports = {
   solidity: {
     version: '0.8.28',
+    
+    
   },
   networks: {
     /*'base-mainnet': {
@@ -44,5 +46,8 @@ module.exports = {
       }
     ]
   },
+  sourcify: {
+    enabled: true
+  }
 };
 

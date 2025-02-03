@@ -4,9 +4,11 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import '@chainlink/contracts/src/v0.8/AutomationCompatibleInterface.sol';
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
-contract PreSale is Ownable2Step, ReentrancyGuard, Pausable {
+contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
+    AggregatorV3Interface internal ethUsdPriceFeed;
+
     IERC20 public utilityToken;
     IERC20 public nativeToken;
     IERC20 public usdt;
@@ -21,15 +23,14 @@ contract PreSale is Ownable2Step, ReentrancyGuard, Pausable {
     uint256 public softCap;
     uint256 public hardCap;
 
-    TokenPurchase {
-        address paymentCurrency;
+    struct TokenPurchase {
         uint256 paymentAmount;
         uint256 tokenAmount;
-
     }
 
-    mapping(address => TokenPurchase) public utilityTokenPurchases; 
 
+    mapping(address => mapping(address => TokenPurchase)) public utilityTokenPurchases;
+    
 
     bool public presaleFinalized;
 
@@ -44,7 +45,6 @@ contract PreSale is Ownable2Step, ReentrancyGuard, Pausable {
 
     constructor(
         address _utilityToken,
-        address _nativeToken,
         address _usdt,
         address _usdc,
         address _ethUsdPriceFeed,
@@ -57,7 +57,6 @@ contract PreSale is Ownable2Step, ReentrancyGuard, Pausable {
         uint256 _hardCap
     ) payable Ownable(msg.sender) {
         require(_utilityToken != address(0), "Invalid token address");
-        require(_nativeToken != address(0), "Invalid token address");
         require(_usdt != address(0), "Invalid usdt address");
         require(_usdc != address(0), "Invalid usdc address");
         require(_presaleUsdPrice > 0, "Invalid price");
@@ -69,7 +68,6 @@ contract PreSale is Ownable2Step, ReentrancyGuard, Pausable {
         require(_hardCap > _softCap, "Invalid soft cap");
 
         utilityToken = IERC20(_utilityToken);
-        nativeToken = IERC20(_nativeToken);
         usdt = IERC20(_usdt);
         usdc = IERC20(_usdc);
 
@@ -108,18 +106,14 @@ contract PreSale is Ownable2Step, ReentrancyGuard, Pausable {
                 usdPaymentToken == address(usdc),
             "Invalid payment token"
         );
-        uint256 utilityTokensAmt = (amount * 1e18) * presaleUsdPrice;
-        _processPurchase(usdPaymentToken, usdPaymentAmt, utilityTokensAmt);
+        uint256 utilityTokensAmt = (amount * 1e12) / presaleUsdPrice; // 1e12 to adjust for USD token decimals
+        _processPurchase(usdPaymentToken, amount, utilityTokensAmt);
     }
 
-    function buyWithNativeToken(
-        address paymentToken,
-        uint256 amount
-    ) external payable nonReentrant {
-        require(paymentToken == address(nativeToken), "Invalid payment token");
+    function buyWithNativeToken(uint256 amount) external payable nonReentrant {
         uint256 ethPrice = getLatestETHPrice();
-        uint256 utilityTokensAmt = ((amount * 1e18) / ethPrice) * presaleUsdPrice;
-        _processPurchase(paymentToken, paymentAmt, utilityTokensAmt);
+        uint256 utilityTokensAmt = ((amount * 1e18) / ethPrice) / presaleUsdPrice;
+        _processPurchase(address(0), amount, utilityTokensAmt);
     }
 
     function _processPurchase(
@@ -135,27 +129,36 @@ contract PreSale is Ownable2Step, ReentrancyGuard, Pausable {
 
         require(totalSold + amount <= hardCap, "Would exceed hard cap");
         require(
-            utilityTokenPurchases[msg.sender].paymentAmount  + amount <= maxPurchase,
+            utilityTokenPurchases[msg.sender][paymentCurrency].tokenAmount + amount <=
+                maxPurchase,
             "Would exceed max purchase"
         );
 
-        // Transfer payment tokens
-        require(
-            IERC20(paymentCurrency).transferFrom(
-                msg.sender,
-                address(this),
-                paymentAmt
-            ),
-            "Payment transfer failed"
-        );
+        if (paymentCurrency == address(0)) {
+            require(msg.value == paymentAmt, "Incorrect payment amount");
+        } else {
+            require(
+                IERC20(paymentCurrency).balanceOf(msg.sender) >= paymentAmt,
+                "Insufficient balance"
+            );
+            // Transfer payment tokens
+            require(
+                IERC20(paymentCurrency).transferFrom(
+                    msg.sender,
+                    address(this),
+                    paymentAmt
+                ),
+                "Payment transfer failed"
+            );
+        }
 
         // Update state
         totalSold += amount;
-        utilityTokenPurchases[msg.sender].paymentAmount += amount;
         
+        utilityTokenPurchases[msg.sender][paymentCurrency].tokenAmount += amount;
+        utilityTokenPurchases[msg.sender][paymentCurrency].paymentAmount += paymentAmt;
 
-
-        emit TokensPurchased(msg.sender, paymentCurrency, amount, tokenAmount);
+        emit TokensPurchased(msg.sender, paymentCurrency, paymentAmt, amount);
     }
 
     function adminWithdrawRemainingUtilityTokens() external onlyOwner {
@@ -164,6 +167,28 @@ contract PreSale is Ownable2Step, ReentrancyGuard, Pausable {
         require(balance > 0, "No tokens to withdraw");
         require(
             nativeToken.transfer(owner(), balance),
+            "Token transfer failed"
+        );
+    }
+
+    function adminWithdrawRaisedFundsNativeTokens() external onlyOwner {
+        require(presaleFinalized, "Presale not finalized");
+        require(totalSold >= softCap, "SoftCap not reached");
+        uint256 balance = address(this).balance;
+        require(balance > 0, "No funds to withdraw");
+        payable(owner()).transfer(balance);
+    }
+
+    function adminWithdrawRaisedFundsERC20Tokens(address tokenAddress) external onlyOwner {
+        require(presaleFinalized, "Presale not finalized");
+        require(totalSold >= softCap, "SoftCap not reached");
+        uint256 balance = IERC20(tokenAddress).balanceOf(address(this));
+        require(balance > 0, "No funds to withdraw");
+        require(
+            IERC20(tokenAddress).transfer(
+                owner(),
+                balance
+            ),
             "Token transfer failed"
         );
     }
@@ -186,25 +211,44 @@ contract PreSale is Ownable2Step, ReentrancyGuard, Pausable {
         _unpause();
     }
 
-    function withdrawSoldUtilityTokens() external {
+    function withdrawPurchasedUtilityTokens(address tokenAddress) external {
         require(presaleFinalized, "Presale not finalized");
         require(totalSold > softCap, "SoftCap not reached");
-        uint256 balance = utilityTokenPurchases[msg.sender].tokenAmount;
+        uint256 balance = utilityTokenPurchases[msg.sender][tokenAddress].tokenAmount;
         require(balance > 0, "No tokens to withdraw");
         require(
             utilityToken.transfer(msg.sender, balance),
             "Token transfer failed"
         );
+        utilityTokenPurchases[msg.sender][tokenAddress].tokenAmount = 0;
+
     }
 
-    function withdrawSentTokens() external {
+    function withdrawSentTokensIfSoftCapNotreached(address paymentCurrencyAddress) external {
         require(presaleFinalized, "Presale not finalized");
         require(totalSold < softCap, "SoftCap not reached");
-        uint256 balance = utilityTokenPurchases[msg.sender].paymentAmount;
+        uint256 balance = utilityTokenPurchases[msg.sender][paymentCurrencyAddress].paymentAmount;
         require(balance > 0, "No tokens to withdraw");
+        if (address(paymentCurrencyAddress) == address(0)) {
+            payable(msg.sender).transfer(balance);
+
+        } else {
         require(
-            IERC20(utilityTokenPurchases[msg.sender].paymentCurrency).transfer(msg.sender, balance),
+            IERC20(paymentCurrencyAddress).transfer(
+                msg.sender,
+                balance
+            ),
             "Token transfer failed"
         );
+        }
+        utilityTokenPurchases[msg.sender][paymentCurrencyAddress].paymentAmount = 0;
     }
+
+    function GetPurchaseBalance(
+        address buyer,
+        address paymentCurrency
+    ) external view returns (uint256, uint256) {
+        return (utilityTokenPurchases[buyer][paymentCurrency].paymentAmount, utilityTokenPurchases[buyer][paymentCurrency].tokenAmount);
+    }
+    
 }
