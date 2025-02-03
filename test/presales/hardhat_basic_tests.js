@@ -16,6 +16,9 @@ let USDCContract
 let USDCContractAddress
 
 let USDBuyAmount = 100
+let USDDistributedAmount = 1000000000
+
+let countInvestingWallets = 5
 
 
 describe('Retrieve Connected Signers', function () {
@@ -43,12 +46,15 @@ describe('Deploy contracts', function () {
         console.log('USDC Contract token deployed to:', USDCContractAddress)
     }).timeout(DEFAULT_TIMEOUT)
 
-
-    //
-    ////
-    ///////
+    ////////////////
+    //  ///  /// //
+    ///         //
+    ////  //  ///
+    /////   ////
+    ///// /////
+    ////////// 
     /////////
-    ////////////
+    ////////
     /// DO NOT USE THESE PARAMS FOR PRODUCTION //
 
     it('should deploy the PRESALE Contract', async function () {
@@ -62,9 +68,9 @@ describe('Deploy contracts', function () {
             "1000000000000000000",                // Min purchase
             "10000000000000000000000",             // Max purchase
             Math.floor(Date.now() / 1000) + 5,    // Presale start time
-            1743664946,    // Presale end time
-            "20000000000000000000000",       // Softcap 20,000 * 1e18
-            "200000000000000000000000"    // Hardcap 200,000 * 1e18
+            Math.floor(Date.now() / 1000) + 60,    // Presale end time
+            "500000000000000000000",       // Softcap 20,000 * 1e18
+            "500000000000000000000000"    // Hardcap 200,000 * 1e18
 
         )
         await PRESALEContract.waitForDeployment()
@@ -74,53 +80,209 @@ describe('Deploy contracts', function () {
         await delay(4000);
         console.log('PRESALE Contract token deployed to:', PRESALEContractAddress)
     }).timeout(DEFAULT_TIMEOUT)
+
+    it('should fund the presale contract with STOX tokens', async function () {
+
+        await STOXContract.transfer(
+            PRESALEContractAddress,
+            ethers.parseUnits('10000000', 18)
+        )
+
+    }).timeout(DEFAULT_TIMEOUT)
+
+    it('should confirm the presale contract received the STOX tokens', async function () {
+        const balance = await STOXContract.balanceOf(
+            PRESALEContractAddress
+        )
+        console.log(
+            `PRESALE Contract STOX balance:`,
+            ethers.formatUnits(balance, 18)
+        )
+        expect(balance.toString()).to.equal('10000000000000000000000000')
+    }).timeout(DEFAULT_TIMEOUT)
 }
 )
+
+describe('Distribute tokens', function () {
+    it('should send 1000 USDT and 1000 USDC tokens to 4 test wallets', async function () {
+        for (let x = 1; x < countInvestingWallets; x++) {
+            await USDTContract.transfer(
+                SIGNERS[x].address,
+                USDDistributedAmount
+            )
+            await USDCContract.transfer(
+                SIGNERS[x].address,
+                USDDistributedAmount
+            )
+        }
+    }).timeout(DEFAULT_TIMEOUT)
+
+    it('should confirm the wallets received the USDT tokens', async function () {
+        for (let x = 1; x < countInvestingWallets; x++) {
+            const balance = await USDTContract.balanceOf(
+                SIGNERS[x].address
+            )
+            console.log(
+                `Wallet ${SIGNERS[x].address} USDT balance:`,
+                ethers.formatUnits(balance, 6)
+            )
+            expect(balance.toString()).to.equal(USDDistributedAmount.toString())
+        }
+    }).timeout(DEFAULT_TIMEOUT)
+
+    it('should confirm the wallets received the USDC tokens', async function () {
+        for (let x = 1; x < countInvestingWallets; x++) {
+            const balance = await USDCContract.balanceOf(
+                SIGNERS[x].address
+            )
+            console.log(
+                `Wallet ${SIGNERS[x].address} USDC balance:`,
+                ethers.formatUnits(balance, 6)
+            )
+            expect(balance.toString()).to.equal(USDDistributedAmount.toString())
+        }
+    }).timeout(DEFAULT_TIMEOUT)
+})
 
 describe('Purchase with USD Stable Coins', function () {
 
     it('allow USDT spending', async function () {
-
 
         const USDTBuyAmountBI = ethers.parseUnits(
             USDBuyAmount.toString(),
             6
         )
         console.log('USDTBuyAmountBI:', USDTBuyAmountBI.toString())
+        for (let x = 1; x < countInvestingWallets; x++) {
+            const USDTContractForWallet = USDTContract.connect(SIGNERS[x])
 
-        const USDTContractForWallet = USDTContract.connect(SIGNERS[0])
+            // Approve the ORDERBOOKContract to spend tokens on behalf of this wallet
+            await USDTContractForWallet.approve(
+                PRESALEContractAddress,
+                USDTBuyAmountBI
+            )
 
-        // Approve the ORDERBOOKContract to spend tokens on behalf of this wallet
-        await USDTContractForWallet.approve(
-            PRESALEContractAddress,
-            USDTBuyAmountBI
-        )
-
-        // Verify approval 
-        const allowance = await USDTContract.allowance(
-            SIGNERS[0].address,
-            PRESALEContractAddress
-        )
-        console.log(
-            `Wallet ${SIGNERS[0].address
-            } approved to spend ${ethers.formatUnits(
-                allowance,
-                6
-            )} USDT tokens for PRESALEContractAddress`
-        )
-
-        // Add assertions if needed
-        expect(allowance.toString()).to.equal(USDTBuyAmountBI.toString())
-
+            // Verify approval 
+            const allowance = await USDTContract.allowance(
+                SIGNERS[x].address,
+                PRESALEContractAddress
+            )
+            console.log(
+                `Wallet ${SIGNERS[x].address
+                } approved to spend ${ethers.formatUnits(
+                    allowance,
+                    6
+                )} USDT tokens for PRESALEContractAddress`
+            )
+            // Add assertions if needed
+            expect(allowance.toString()).to.equal(USDTBuyAmountBI.toString())
+        }
 
     }).timeout(DEFAULT_TIMEOUT)
-
 
     it('buy tokens with USDT', async function () {
-        const PRESALEContractForWallet = PRESALEContract.connect(SIGNERS[0])
-        // Send the buy order on behalf of this wallet
-        await PRESALEContractForWallet.buyWithUsdToken(USDTContractAddress, 100_000_000)
+        for (let x = 1; x < countInvestingWallets; x++) {
+            const PRESALEContractForWallet = PRESALEContract.connect(SIGNERS[x])
+            await PRESALEContractForWallet.buyWithUsdToken(USDTContractAddress, 100_000_000)
+        }
     }).timeout(DEFAULT_TIMEOUT)
 
+    it('confirm USDT token purchase', async function () {
+        for (let x = 1; x < countInvestingWallets; x++) {
+            const PRESALEContractForWallet = PRESALEContract.connect(SIGNERS[x])
+            purchaseBalanceDetails = await PRESALEContractForWallet.GetPurchaseBalance(SIGNERS[x], USDTContractAddress)
+            console.log('purchaseBalanceDetails:', purchaseBalanceDetails)
+        }
+    }).timeout(DEFAULT_TIMEOUT)
+
+})
+
+describe('Retrieve the presale financials', function () {
+
+    it('get the totalSold, softcap, hardcap presaleStartTime, presaleStopTime, ', async function () {
+
+        const PRESALEContractForWallet = PRESALEContract.connect(SIGNERS[0])
+        const totalSold = await PRESALEContractForWallet.totalSold()
+        const softcap = await PRESALEContractForWallet.softCap()
+        const hardcap = await PRESALEContractForWallet.hardCap()
+        const presaleStartTime = await PRESALEContractForWallet.presaleStartTime()
+        const presaleEndTime = await PRESALEContractForWallet.presaleEndTime()
+
+        console.log('totalSold:', totalSold.toString())
+        console.log('softcap:', softcap.toString())
+        console.log('hardcap:', hardcap.toString())
+        console.log('presaleStartTime:', presaleStartTime.toString())
+        console.log('presaleEndTime:', presaleEndTime.toString())
+
+
+
+    }).timeout(DEFAULT_TIMEOUT)
+})
+
+
+describe('Admin Finalization of the presale', function () {
+
+    it('finalize the presale', async function () {
+        const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+        await delay(60000);
+        const PRESALEContractForWallet = PRESALEContract.connect(SIGNERS[0])
+        await PRESALEContractForWallet.finalizePresale()
+    }).timeout(DEFAULT_TIMEOUT)
+
+})
+
+
+describe('POST-PRESALE Withdraw STOX tokens Coins', function () {
+
+
+
+    it('should withdraw STOX tokens', async function () {
+
+        for (let x = 1; x < countInvestingWallets; x++) {
+            console.log('PRESALE Contract token deployed to:', PRESALEContractAddress)
+
+            const PRESALEContractForWallet = PRESALEContract.connect(SIGNERS[x])
+            await PRESALEContractForWallet.withdrawPurchasedUtilityTokens(USDTContractAddress)
+        }
+    }).timeout(DEFAULT_TIMEOUT)
+
+    it('should  confirm the STOX are on the user account', async function () {
+        for (let x = 1; x < countInvestingWallets; x++) {
+            const STOXContractForWallet = STOXContract.connect(SIGNERS[x])
+            const balance = await STOXContractForWallet.balanceOf(SIGNERS[x].address)
+            console.log('STOX balance:', balance.toString())
+            expect(balance.toString()).to.equal('200000000000000000000')
+        }
+
+    }).timeout(DEFAULT_TIMEOUT)
+
+})
+
+
+describe('POST-PRESALE ADMIN withdaw USDT Coins', function () {
+
+    it('empty USDT tokens from 0 account (admin)', async function () {
+        const balance = await USDTContract.balanceOf(SIGNERS[0].address)
+        await USDTContract.transfer(SIGNERS[10].address,balance)
+        const newBalance = await USDTContract.balanceOf(SIGNERS[0].address)
+        console.log('New USDT balance:', newBalance.toString())
+    }).timeout(DEFAULT_TIMEOUT)
+
+
+
+
+
+    it('should withdraw USDT tokens', async function () {
+        console.log('PRESALE Contract token deployed to:', PRESALEContractAddress)
+        const PRESALEContractForWallet = PRESALEContract.connect(SIGNERS[0])
+        await PRESALEContractForWallet.adminWithdrawRaisedFundsERC20Tokens(USDTContractAddress)
+
+    }).timeout(DEFAULT_TIMEOUT)
+
+    it('should  confirm the USDT are on the user account', async function () {
+        const newBalance = await USDTContract.balanceOf(SIGNERS[0].address)
+        console.log('New USDT balance:', newBalance.toString())
+        expect(newBalance.toString()).to.equal('200000000000000000000')
+    }).timeout(DEFAULT_TIMEOUT)
 
 })

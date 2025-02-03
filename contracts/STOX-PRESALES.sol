@@ -106,13 +106,13 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
                 usdPaymentToken == address(usdc),
             "Invalid payment token"
         );
-        uint256 utilityTokensAmt = (amount * 1e12) / presaleUsdPrice; // 1e12 to adjust for USD token decimals
+        uint256 utilityTokensAmt = (amount * 1e12) * presaleUsdPrice; // 1e12 to adjust for USD token decimals
         _processPurchase(usdPaymentToken, amount, utilityTokensAmt);
     }
 
     function buyWithNativeToken(uint256 amount) external payable nonReentrant {
         uint256 ethPrice = getLatestETHPrice();
-        uint256 utilityTokensAmt = ((amount * 1e18) / ethPrice) / presaleUsdPrice;
+        uint256 utilityTokensAmt = ((amount * 1e18) / ethPrice) * presaleUsdPrice;
         _processPurchase(address(0), amount, utilityTokensAmt);
     }
 
@@ -196,11 +196,10 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
     function finalizePresale() external onlyOwner {
         require(block.timestamp > presaleEndTime, "Presale not ended");
         require(!presaleFinalized, "Presale already finalized");
-
-        if (totalSold >= softCap) {
-            presaleFinalized = true;
-            emit PresaleFinalized(totalSold);
-        }
+        require (totalSold >= softCap, "SoftCap not reached");
+        presaleFinalized = true;
+        emit PresaleFinalized(totalSold);
+        
     }
 
     function pausePresale() external onlyOwner {
