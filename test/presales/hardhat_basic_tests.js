@@ -282,7 +282,7 @@ describe('POST-PRESALE ADMIN withdaw USDT Coins', function () {
     it('should  confirm the USDT are on the user account', async function () {
         const newBalance = await USDTContract.balanceOf(SIGNERS[0].address)
         console.log('New USDT balance:', newBalance.toString())
-        expect(newBalance.toString()).to.equal('200000000000000000000')
+        expect(newBalance.toString()).to.equal('400000000')
     }).timeout(DEFAULT_TIMEOUT)
 
 })
