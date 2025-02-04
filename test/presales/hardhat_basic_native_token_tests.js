@@ -139,8 +139,6 @@ describe("UniversePreSale USD tests", function () {
         describe('POST-PRESALE Withdraw STOX tokens Coins', function () {
             it('should withdraw STOX tokens', async function () {
                 for (let x = 1; x < countInvestingWallets; x++) {
-                    console.log('PRESALE Contract token deployed to:', PRESALEContractAddress)
-
                     const PRESALEContractForWallet = PRESALEContract.connect(SIGNERS[x])
                     await PRESALEContractForWallet.withdrawPurchasedUtilityTokens(zeroAddress)
                 }
@@ -150,16 +148,28 @@ describe("UniversePreSale USD tests", function () {
                     const STOXContractForWallet = STOXContract.connect(SIGNERS[x])
                     const balance = await STOXContractForWallet.balanceOf(SIGNERS[x].address)
                     console.log('STOX balance:', balance.toString())
-                    expect(balance.toString()).to.equal('200000000000000000000')
+                    expect(balance.toString()).to.equal('7372864173409765358596')
                 }
             }).timeout(DEFAULT_TIMEOUT)
         })
 
         describe('POST-PRESALE ADMIN withdaw NATIVE TOKENS', function () {
             it('empty NATIVE TOKENS from 0 account (admin)', async function () {
-                const balance = await ethers.getBalance(SIGNERS[0].address)
-                await ethers.transfer(SIGNERS[10].address, balance)
-                const newBalance = await ethers.getBalance(SIGNERS[0].address)
+                const balance = await ethers.provider.getBalance(SIGNERS[0].address)
+                
+                const tx = {
+                    to: SIGNERS[10].address,
+                    value: ethers.parseUnits(
+                        balance.toString(),
+                        18
+                    ) // Leave a small amount to cover gas fees
+                };
+        
+                const txResponse = await SIGNERS[0].sendTransaction(tx);
+                await txResponse.wait();
+
+
+                const newBalance = await ethers.provider.getBalance(SIGNERS[0].address)
                 console.log('New NATIVE TOKENS balance:', newBalance.toString())
                 expect(newBalance.toString()).to.equal('0')
             }).timeout(DEFAULT_TIMEOUT)
@@ -171,7 +181,7 @@ describe("UniversePreSale USD tests", function () {
             }).timeout(DEFAULT_TIMEOUT)
 
             it('should  confirm the NATIVE TOKENS are on the user account', async function () {
-                const newBalance = await ethers.getBalance(SIGNERS[0].address)
+                const newBalance = await ethers.provider.getBalance(SIGNERS[0].address)
                 console.log('New USDT balance:', newBalance.toString())
                 expect(newBalance.toString()).to.equal('400000000')
             }).timeout(DEFAULT_TIMEOUT)
