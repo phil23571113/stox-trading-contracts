@@ -243,7 +243,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         utilityTokenPurchases[msg.sender][paymentCurrencyAddress].paymentAmount = 0;
     }
 
-    function getPurchaseBalance(
+    function getPurchasedBalance(
         address buyer,
         address paymentCurrency
     ) external view returns (uint256, uint256) {

@@ -95,7 +95,7 @@ describe("UniversePreSale USD tests", function () {
         it('confirm USDT token purchase', async function () {
             for (let x = 1; x < countInvestingWallets; x++) {
                 const PRESALEContractForWallet = PRESALEContract.connect(SIGNERS[x])
-                purchaseBalanceDetails = await PRESALEContractForWallet.getPurchaseBalance(SIGNERS[x], USDTContractAddress)
+                purchaseBalanceDetails = await PRESALEContractForWallet.getPurchasedBalance(SIGNERS[x], USDTContractAddress)
                 console.log('purchaseBalanceDetails:', purchaseBalanceDetails)
             }
         }).timeout(DEFAULT_TIMEOUT)
@@ -103,46 +103,34 @@ describe("UniversePreSale USD tests", function () {
     })
 
     describe('Retrieve the presale financials', function () {
-
         it('get the totalSold, softcap, hardcap presaleStartTime, presaleStopTime, ', async function () {
-
             const PRESALEContractForWallet = PRESALEContract.connect(SIGNERS[0])
             const totalSold = await PRESALEContractForWallet.totalSold()
             const softcap = await PRESALEContractForWallet.softCap()
             const hardcap = await PRESALEContractForWallet.hardCap()
             const presaleStartTime = await PRESALEContractForWallet.presaleStartTime()
             const presaleEndTime = await PRESALEContractForWallet.presaleEndTime()
-
             console.log('totalSold:', totalSold.toString())
             console.log('softcap:', softcap.toString())
             console.log('hardcap:', hardcap.toString())
             console.log('presaleStartTime:', presaleStartTime.toString())
             console.log('presaleEndTime:', presaleEndTime.toString())
-
-
-
         }).timeout(DEFAULT_TIMEOUT)
     })
 
 
     describe('Admin Finalization of the presale', function () {
-
         it('finalize the presale', async function () {
             const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
             await delay(60000);
             const PRESALEContractForWallet = PRESALEContract.connect(SIGNERS[0])
             await PRESALEContractForWallet.finalizePresale()
         }).timeout(DEFAULT_TIMEOUT)
-
     })
 
 
     describe('POST-PRESALE Withdraw STOX tokens Coins', function () {
-
-
-
         it('should withdraw STOX tokens', async function () {
-
             for (let x = 1; x < countInvestingWallets; x++) {
                 console.log('PRESALE Contract token deployed to:', PRESALEContractAddress)
 
@@ -150,7 +138,6 @@ describe("UniversePreSale USD tests", function () {
                 await PRESALEContractForWallet.withdrawPurchasedUtilityTokens(USDTContractAddress)
             }
         }).timeout(DEFAULT_TIMEOUT)
-
         it('should  confirm the STOX are on the user account', async function () {
             for (let x = 1; x < countInvestingWallets; x++) {
                 const STOXContractForWallet = STOXContract.connect(SIGNERS[x])
@@ -158,23 +145,17 @@ describe("UniversePreSale USD tests", function () {
                 console.log('STOX balance:', balance.toString())
                 expect(balance.toString()).to.equal('200000000000000000000')
             }
-
         }).timeout(DEFAULT_TIMEOUT)
-
     })
 
-
     describe('POST-PRESALE ADMIN withdaw USDT Coins', function () {
-
         it('empty USDT tokens from 0 account (admin)', async function () {
             const balance = await USDTContract.balanceOf(SIGNERS[0].address)
             await USDTContract.transfer(SIGNERS[10].address, balance)
             const newBalance = await USDTContract.balanceOf(SIGNERS[0].address)
             console.log('New USDT balance:', newBalance.toString())
+            expect (newBalance.toString()).to.equal('0')
         }).timeout(DEFAULT_TIMEOUT)
-
-
-
 
         it('should withdraw USDT tokens', async function () {
             console.log('PRESALE Contract token deployed to:', PRESALEContractAddress)

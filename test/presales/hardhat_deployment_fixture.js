@@ -13,6 +13,8 @@ async function deployPresaleSetupFixture() {
     const countInvestingWallets = 5
 
     const SIGNERS = await ethers.getSigners()
+    const presaleStartTime = Math.floor(Date.now() / 1000) + 5
+    const presaleEndTime = Math.floor(Date.now() / 1000) + 20
 
     const MockV3AggregatorContractFactory = await ethers.getContractFactory('MockV3Aggregator')
     const MockV3AggregatorContract = await MockV3AggregatorContractFactory.deploy("271265000000",)
@@ -44,8 +46,8 @@ async function deployPresaleSetupFixture() {
         2,                // Presale rate - corresponds to 0.000002 USD
         "1000000000000000000",                // Min purchase
         "10000000000000000000000",             // Max purchase
-        Math.floor(Date.now() / 1000) + 5,    // Presale start time
-        Math.floor(Date.now() / 1000) + 60,    // Presale end time
+        presaleStartTime,    // Presale start time
+        presaleEndTime,    // Presale end time
         "500000000000000000000",       // Softcap 20,000 * 1e18
         "500000000000000000000000"    // Hardcap 200,000 * 1e18
 
@@ -118,7 +120,9 @@ async function deployPresaleSetupFixture() {
         MockV3AggregatorContract,
         MockV3AggregatorContractAddress,
         USDDistributedAmount,
-        countInvestingWallets
+        countInvestingWallets,
+        presaleStartTime,
+        presaleEndTime
 
     }
 
