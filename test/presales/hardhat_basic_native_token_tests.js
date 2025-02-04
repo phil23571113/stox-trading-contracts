@@ -104,6 +104,12 @@ describe("UniversePreSale USD tests", function () {
                 const hardcap = await PRESALEContractForWallet.hardCap()
                 const presaleStartTime = await PRESALEContractForWallet.presaleStartTime()
                 const presaleEndTime = await PRESALEContractForWallet.presaleEndTime()
+                const raisedEth = await PRESALEContractForWallet.raisedBalances(zeroAddress)
+                const raisedUsdt = await PRESALEContractForWallet.raisedBalances(USDTContractAddress)
+                const raisedUsdc = await PRESALEContractForWallet.raisedBalances(USDCContractAddress)
+                console.log('raisedEth:', raisedEth.toString())
+                console.log('raisedUsdt:', raisedUsdt.toString())
+                console.log('raisedUsdc:', raisedUsdc.toString())
                 console.log('totalSold:', totalSold.toString())
                 console.log('softcap:', softcap.toString())
                 console.log('hardcap:', hardcap.toString())
@@ -154,9 +160,9 @@ describe("UniversePreSale USD tests", function () {
         })
 
         describe('POST-PRESALE ADMIN withdaw NATIVE TOKENS', function () {
-            it('empty NATIVE TOKENS from 0 account (admin)', async function () {
+           /*  it('empty NATIVE TOKENS from 0 account (admin)', async function () {
                 const balance = await ethers.provider.getBalance(SIGNERS[0].address)
-                
+                console.log('NATIVE TOKENS balance before offload:', balance.toString())
                 const tx = {
                     to: SIGNERS[10].address,
                     value: ethers.parseUnits(
@@ -172,19 +178,21 @@ describe("UniversePreSale USD tests", function () {
                 const newBalance = await ethers.provider.getBalance(SIGNERS[0].address)
                 console.log('New NATIVE TOKENS balance:', newBalance.toString())
                 expect(newBalance.toString()).to.equal('0')
-            }).timeout(DEFAULT_TIMEOUT)
+            }).timeout(DEFAULT_TIMEOUT) */
 
             it('should withdraw NATIVE TOKENS', async function () {
                 const PRESALEContractForWallet = PRESALEContract.connect(SIGNERS[0])
+                const raisedEth = await PRESALEContractForWallet.raisedBalances(zeroAddress)
+                const oldbalance = await ethers.provider.getBalance(SIGNERS[0].address)
+                console.log('NATIVE TOKENS balance BEFORE withdrawal:', oldbalance.toString())
                 await PRESALEContractForWallet.adminWithdrawRaisedFundsNativeTokens()
-
-            }).timeout(DEFAULT_TIMEOUT)
-
-            it('should  confirm the NATIVE TOKENS are on the user account', async function () {
                 const newBalance = await ethers.provider.getBalance(SIGNERS[0].address)
-                console.log('New USDT balance:', newBalance.toString())
-                expect(newBalance.toString()).to.equal('400000000')
+                console.log('NATIVE TOKENS balance AFTER withdrawal:', newBalance.toString())
+                expect(newBalance.toString()).to.equal((oldbalance - raisedEth).toString())
+
             }).timeout(DEFAULT_TIMEOUT)
+
+        
 
         })
 

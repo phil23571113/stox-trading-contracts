@@ -23,6 +23,8 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
     uint256 public softCap;
     uint256 public hardCap;
 
+    mapping(address => uint256) public raisedBalances;
+
     struct TokenPurchase {
         uint256 paymentAmount;
         uint256 tokenAmount;
@@ -158,6 +160,8 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         utilityTokenPurchases[msg.sender][paymentCurrency].tokenAmount += amount;
         utilityTokenPurchases[msg.sender][paymentCurrency].paymentAmount += paymentAmt;
 
+        raisedBalances[paymentCurrency] += paymentAmt;
+
         emit TokensPurchased(msg.sender, paymentCurrency, paymentAmt, amount);
     }
 
@@ -169,6 +173,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
             nativeToken.transfer(owner(), balance),
             "Token transfer failed"
         );
+        
     }
 
     function adminWithdrawRaisedFundsNativeTokens() external onlyOwner {
@@ -177,6 +182,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         uint256 balance = address(this).balance;
         require(balance > 0, "No funds to withdraw");
         payable(owner()).transfer(balance);
+        raisedBalances[address(0)] = 0;
     }
 
     function adminWithdrawRaisedFundsERC20Tokens(address tokenAddress) external onlyOwner {
@@ -191,6 +197,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
             ),
             "Token transfer failed"
         );
+        raisedBalances[tokenAddress] = 0;
     }
 
     function finalizePresale() external onlyOwner {
