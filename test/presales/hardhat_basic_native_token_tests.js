@@ -130,8 +130,6 @@ describe("UniversePreSale USD tests", function () {
 
         describe('Admin Finalization of the presale', function () {
             it('finalize the presale', async function () {
-                /*  const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
- await delay(60000); */
                 const PRESALEContractForWallet = PRESALEContract.connect(SIGNERS[0])
                 await PRESALEContractForWallet.finalizePresale()
             }).timeout(DEFAULT_TIMEOUT)
