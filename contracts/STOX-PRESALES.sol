@@ -10,7 +10,6 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
     AggregatorV3Interface internal ethUsdPriceFeed;
 
     IERC20 public utilityToken;
-    IERC20 public nativeToken;
     IERC20 public usdt;
     IERC20 public usdc;
 
@@ -23,7 +22,6 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
     uint256 public softCap;
     uint256 public hardCap;
 
-    mapping(address => uint256) public raisedBalances;
 
     struct TokenPurchase {
         uint256 paymentAmount;
@@ -61,12 +59,12 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         require(_utilityToken != address(0), "Invalid token address");
         require(_usdt != address(0), "Invalid usdt address");
         require(_usdc != address(0), "Invalid usdc address");
-        require(_presaleUsdPrice > 0, "Invalid price");
-        require(_minPurchase > 0, "Invalid min purchase");
+        require(_presaleUsdPrice != 0, "Invalid price");
+        require(_minPurchase != 0, "Invalid min purchase");
         require(_maxPurchase >= _minPurchase, "Invalid max purchase");
         require(_presaleStartTime > block.timestamp, "Invalid start time");
         require(_presaleEndTime > _presaleStartTime, "Invalid end time");
-        require(_hardCap > 0, "Invalid hard cap");
+        require(_hardCap != 0, "Invalid hard cap");
         require(_hardCap > _softCap, "Invalid soft cap");
 
         utilityToken = IERC20(_utilityToken);
@@ -86,7 +84,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
 
     function getLatestETHPrice() public view returns (uint256) {
         (, int256 price, , , ) = ethUsdPriceFeed.latestRoundData();
-        require(price > 0, "Invalid price feed data");
+        require(price != 0, "Invalid price feed data");
         return uint256(price);
     }
 
@@ -160,36 +158,34 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         utilityTokenPurchases[msg.sender][paymentCurrency].tokenAmount += amount;
         utilityTokenPurchases[msg.sender][paymentCurrency].paymentAmount += paymentAmt;
 
-        raisedBalances[paymentCurrency] += paymentAmt;
 
         emit TokensPurchased(msg.sender, paymentCurrency, paymentAmt, amount);
     }
 
-    function adminWithdrawRemainingUtilityTokens() external onlyOwner {
+    function adminWithdrawRemainingUtilityTokens() external onlyOwner payable {
         require(presaleFinalized, "Presale not finalized");
-        uint256 balance = nativeToken.balanceOf(address(this));
-        require(balance > 0, "No tokens to withdraw");
+        uint256 balance = utilityToken.balanceOf(address(this));
+        require(balance != 0, "No tokens to withdraw");
         require(
-            nativeToken.transfer(owner(), balance),
+            utilityToken.transfer(owner(), balance),
             "Token transfer failed"
         );
         
     }
 
-    function adminWithdrawRaisedFundsNativeTokens() external onlyOwner {
+    function adminWithdrawRaisedFundsNativeTokens() external onlyOwner payable {
         require(presaleFinalized, "Presale not finalized");
         require(totalSold >= softCap, "SoftCap not reached");
         uint256 balance = address(this).balance;
-        require(balance > 0, "No funds to withdraw");
+        require(balance != 0, "No funds to withdraw");
         payable(owner()).transfer(balance);
-        raisedBalances[address(0)] = 0;
     }
 
-    function adminWithdrawRaisedFundsERC20Tokens(address tokenAddress) external onlyOwner {
+    function adminWithdrawRaisedFundsERC20Tokens(address tokenAddress) external onlyOwner payable {
         require(presaleFinalized, "Presale not finalized");
         require(totalSold >= softCap, "SoftCap not reached");
         uint256 balance = IERC20(tokenAddress).balanceOf(address(this));
-        require(balance > 0, "No funds to withdraw");
+        require(balance != 0, "No funds to withdraw");
         require(
             IERC20(tokenAddress).transfer(
                 owner(),
@@ -197,10 +193,9 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
             ),
             "Token transfer failed"
         );
-        raisedBalances[tokenAddress] = 0;
     }
 
-    function finalizePresale() external onlyOwner {
+    function finalizePresale() external onlyOwner payable{
         require(block.timestamp > presaleEndTime, "Presale not ended");
         require(!presaleFinalized, "Presale already finalized");
         require (totalSold >= softCap, "SoftCap not reached");
@@ -209,11 +204,11 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         
     }
 
-    function pausePresale() external onlyOwner {
+    function pausePresale() external onlyOwner payable{
         _pause();
     }
 
-    function unpausePresale() external onlyOwner {
+    function unpausePresale() external onlyOwner payable{
         _unpause();
     }
 
@@ -221,7 +216,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         require(presaleFinalized, "Presale not finalized");
         require(totalSold > softCap, "SoftCap not reached");
         uint256 balance = utilityTokenPurchases[msg.sender][tokenAddress].tokenAmount;
-        require(balance > 0, "No tokens to withdraw");
+        require(balance != 0, "No tokens to withdraw");
         require(
             utilityToken.transfer(msg.sender, balance),
             "Token transfer failed"
@@ -234,7 +229,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         require(presaleFinalized, "Presale not finalized");
         require(totalSold < softCap, "SoftCap not reached");
         uint256 balance = utilityTokenPurchases[msg.sender][paymentCurrencyAddress].paymentAmount;
-        require(balance > 0, "No tokens to withdraw");
+        require(balance != 0, "No tokens to withdraw");
         if (address(paymentCurrencyAddress) == address(0)) {
             payable(msg.sender).transfer(balance);
 

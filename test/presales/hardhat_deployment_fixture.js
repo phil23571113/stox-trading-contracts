@@ -12,6 +12,8 @@ async function deployPresaleSetupFixture() {
     const USDDistributedAmount = 1000000000
     const countInvestingWallets = 5
 
+    const STOXAmountInPresale = 10000000
+
     const SIGNERS = await ethers.getSigners()
     const presaleStartTime = Math.floor(Date.now() / 1000) + 5
     const presaleEndTime = Math.floor(Date.now() / 1000) + 20
@@ -58,7 +60,7 @@ async function deployPresaleSetupFixture() {
 
     await STOXContract.transfer(
         PRESALEContractAddress,
-        ethers.parseUnits('10000000', 18)
+        ethers.parseUnits(STOXAmountInPresale.toString(), 18)
     )
 
     const balance = await STOXContract.balanceOf(
@@ -122,13 +124,14 @@ async function deployPresaleSetupFixture() {
         USDDistributedAmount,
         countInvestingWallets,
         presaleStartTime,
-        presaleEndTime
+        presaleEndTime,
+        STOXAmountInPresale
 
     }
 
 }
 
-describe("UniversePreSale Deployment Tests", function () {
+describe("StoxPreSale Deployment Tests", function () {
     let fixture;
 
     beforeEach(async function () {
