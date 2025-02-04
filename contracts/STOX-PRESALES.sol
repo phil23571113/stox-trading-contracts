@@ -100,7 +100,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
     function buyWithUsdToken(
         address usdPaymentToken,
         uint256 amount
-    ) external nonReentrant {
+    ) external nonReentrant whenNotPaused {
         require(
             usdPaymentToken == address(usdt) ||
                 usdPaymentToken == address(usdc),
@@ -210,7 +210,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         _unpause();
     }
 
-    function withdrawPurchasedUtilityTokens(address tokenAddress) external {
+    function withdrawPurchasedUtilityTokens(address tokenAddress) external whenNotPaused{
         require(presaleFinalized, "Presale not finalized");
         require(totalSold > softCap, "SoftCap not reached");
         uint256 balance = utilityTokenPurchases[msg.sender][tokenAddress].tokenAmount;
@@ -223,7 +223,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
 
     }
 
-    function withdrawSentTokensIfSoftCapNotreached(address paymentCurrencyAddress) external {
+    function withdrawSentTokensIfSoftCapNotreached(address paymentCurrencyAddress) external whenNotPaused{
         require(presaleFinalized, "Presale not finalized");
         require(totalSold < softCap, "SoftCap not reached");
         uint256 balance = utilityTokenPurchases[msg.sender][paymentCurrencyAddress].paymentAmount;
@@ -243,7 +243,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         utilityTokenPurchases[msg.sender][paymentCurrencyAddress].paymentAmount = 0;
     }
 
-    function GetPurchaseBalance(
+    function getPurchaseBalance(
         address buyer,
         address paymentCurrency
     ) external view returns (uint256, uint256) {
