@@ -3,10 +3,10 @@ pragma solidity 0.8.28;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
-contract Usdt is Ownable2Step, ERC20 {
+contract MockUsdt is Ownable2Step, ERC20 {
    
 
-    constructor() payable  ERC20("usdt", "USDT") Ownable(msg.sender) {
+    constructor() payable  ERC20("MockUsdt", "MOCKUSDT") Ownable(msg.sender) {
         _mint(msg.sender, 1_000_000_000 * 1e6);
     }
 
