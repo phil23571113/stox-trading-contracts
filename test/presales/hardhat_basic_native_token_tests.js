@@ -128,7 +128,7 @@ describe("UniversePreSale NATIVE TOKEN tests", function () {
             }).timeout(DEFAULT_TIMEOUT)
         })
 
-        describe('Wait until the presal is finished', function () {
+        describe('Wait until the presale is finished', function () {
             it('should wait until the presale is finished', async function () {
                 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
                 const presaleEndTime = await PRESALEContract.presaleEndTime()

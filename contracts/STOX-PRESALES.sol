@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
-
     using SafeERC20 for IERC20;
 
     AggregatorV3Interface internal ethUsdPriceFeed;
@@ -27,16 +26,14 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
     uint256 public hardCap;
     uint256 public lockPeriod;
 
-
     struct TokenPurchase {
         uint256 paymentAmount;
         uint256 tokenAmount;
         uint256 unlockTime;
     }
 
-
-    mapping(address => mapping(address => TokenPurchase)) public utilityTokenPurchases;
-    
+    mapping(address => mapping(address => TokenPurchase))
+        public utilityTokenPurchases;
 
     bool public presaleFinalized;
 
@@ -48,6 +45,9 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
     );
 
     event PresaleFinalized(uint256 totalSold);
+
+    event PresalePaused(uint256 timestamp);
+    event PresaleUnpaused(uint256 timestamp);
 
     constructor(
         address _utilityToken,
@@ -62,7 +62,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         uint256 _softCap,
         uint256 _hardCap,
         uint256 _lockPeriod
-    ) payable Ownable(msg.sender)  {
+    ) payable Ownable(msg.sender) {
         require(_utilityToken != address(0), "Invalid token address");
         require(_usdt != address(0), "Invalid usdt address");
         require(_usdc != address(0), "Invalid usdc address");
@@ -120,7 +120,8 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
 
     function buyWithNativeToken(uint256 amount) external payable nonReentrant {
         uint256 ethPrice = getLatestETHPrice();
-        uint256 utilityTokensAmt = ((amount * 1e18) / ethPrice) * presaleUsdPrice;
+        uint256 utilityTokensAmt = ((amount * 1e18) / ethPrice) *
+            presaleUsdPrice;
         _processPurchase(address(0), amount, utilityTokensAmt);
     }
 
@@ -137,7 +138,8 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
 
         require(totalSold + amount <= hardCap, "Would exceed hard cap");
         require(
-            utilityTokenPurchases[msg.sender][paymentCurrency].tokenAmount + amount <=
+            utilityTokenPurchases[msg.sender][paymentCurrency].tokenAmount +
+                amount <=
                 maxPurchase,
             "Would exceed max purchase"
         );
@@ -151,33 +153,39 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
             );
             // Transfer payment tokens
             IERC20(paymentCurrency).safeTransferFrom(
-                    msg.sender,
-                    address(this),
-                    paymentAmt
-                );
+                msg.sender,
+                address(this),
+                paymentAmt
+            );
         }
 
         // Update state
         totalSold += amount;
-        
-        utilityTokenPurchases[msg.sender][paymentCurrency].tokenAmount += amount;
-        utilityTokenPurchases[msg.sender][paymentCurrency].paymentAmount += paymentAmt;
-        utilityTokenPurchases[msg.sender][paymentCurrency].unlockTime = block.timestamp + lockPeriod;
 
+        utilityTokenPurchases[msg.sender][paymentCurrency]
+            .tokenAmount += amount;
+        utilityTokenPurchases[msg.sender][paymentCurrency]
+            .paymentAmount += paymentAmt;
+        utilityTokenPurchases[msg.sender][paymentCurrency].unlockTime =
+            block.timestamp +
+            lockPeriod;
 
         emit TokensPurchased(msg.sender, paymentCurrency, paymentAmt, amount);
     }
 
-    function adminWithdrawRemainingUtilityTokens() external onlyOwner payable {
+    function adminWithdrawRemainingUtilityTokens() external onlyOwner {
         require(presaleFinalized, "Presale not finalized");
         uint256 balance = utilityToken.balanceOf(address(this));
         require(balance != 0, "No tokens to withdraw");
-        
+
         utilityToken.safeTransfer(owner(), balance);
-        
     }
 
-    function adminWithdrawRaisedFundsNativeTokens() external onlyOwner payable {
+    function adminWithdrawRaisedFundsNativeTokens()
+        external
+        nonReentrant
+        onlyOwner
+    {
         require(presaleFinalized, "Presale not finalized");
         require(totalSold >= softCap, "SoftCap not reached");
         uint256 balance = address(this).balance;
@@ -185,55 +193,69 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         payable(owner()).transfer(balance);
     }
 
-    function adminWithdrawRaisedFundsERC20Tokens(address tokenAddress) external onlyOwner payable {
+    function adminWithdrawRaisedFundsERC20Tokens(
+        address tokenAddress
+    ) external nonReentrant onlyOwner {
         require(presaleFinalized, "Presale not finalized");
         require(totalSold >= softCap, "SoftCap not reached");
         uint256 balance = IERC20(tokenAddress).balanceOf(address(this));
         require(balance != 0, "No funds to withdraw");
-        IERC20(tokenAddress).safeTransfer(owner(),balance);
+        IERC20(tokenAddress).safeTransfer(owner(), balance);
     }
 
-    function finalizePresale() external onlyOwner payable{
+    function finalizePresale() external nonReentrant onlyOwner {
         require(block.timestamp > presaleEndTime, "Presale not ended");
         require(!presaleFinalized, "Presale already finalized");
-        require (totalSold >= softCap, "SoftCap not reached");
+        require(totalSold >= softCap, "SoftCap not reached");
         presaleFinalized = true;
         emit PresaleFinalized(totalSold);
-        
     }
 
-    function pausePresale() external onlyOwner payable{
+    function pausePresale() external nonReentrant onlyOwner {
+        require(!paused(), "Already paused");
         _pause();
+        emit PresalePaused(block.timestamp);
     }
 
-    function unpausePresale() external onlyOwner payable{
+    function unpausePresale() external nonReentrant onlyOwner {
+        require(paused(), "Not paused");
         _unpause();
+        emit PresaleUnpaused(block.timestamp);
     }
 
-    function withdrawPurchasedUtilityTokens(address paymentCurrency) external whenNotPaused{
+    function withdrawPurchasedUtilityTokens(
+        address paymentCurrency
+    ) external whenNotPaused {
         require(presaleFinalized, "Presale not finalized");
         require(totalSold > softCap, "SoftCap not reached");
-        uint256 balance = utilityTokenPurchases[msg.sender][paymentCurrency].tokenAmount;
+        uint256 balance = utilityTokenPurchases[msg.sender][paymentCurrency]
+            .tokenAmount;
         require(balance != 0, "No tokens to withdraw");
-        require(utilityTokenPurchases[msg.sender][paymentCurrency].unlockTime < block.timestamp, "Tokens are locked");
+        require(
+            utilityTokenPurchases[msg.sender][paymentCurrency].unlockTime <
+                block.timestamp,
+            "Tokens are locked"
+        );
         utilityToken.safeTransfer(msg.sender, balance);
         utilityTokenPurchases[msg.sender][paymentCurrency].tokenAmount = 0;
-
     }
 
-    function withdrawSentTokensIfSoftCapNotreached(address paymentCurrencyAddress) external whenNotPaused{
+    function withdrawSentTokensIfSoftCapNotreached(
+        address paymentCurrencyAddress
+    ) external whenNotPaused {
         require(presaleFinalized, "Presale not finalized");
         require(totalSold < softCap, "SoftCap not reached");
-        uint256 balance = utilityTokenPurchases[msg.sender][paymentCurrencyAddress].paymentAmount;
+        uint256 balance = utilityTokenPurchases[msg.sender][
+            paymentCurrencyAddress
+        ].paymentAmount;
         require(balance != 0, "No tokens to withdraw");
-        utilityTokenPurchases[msg.sender][paymentCurrencyAddress].paymentAmount = 0;
+        utilityTokenPurchases[msg.sender][paymentCurrencyAddress]
+            .paymentAmount = 0;
         if (address(paymentCurrencyAddress) == address(0)) {
             payable(msg.sender).transfer(balance);
-
         } else {
-            IERC20(paymentCurrencyAddress).safeTransfer(msg.sender,balance);
+            IERC20(paymentCurrencyAddress).safeTransfer(msg.sender, balance);
         }
-        
     }
 
     function getPurchasedBalance(
@@ -241,9 +263,9 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         address paymentCurrency
     ) external view returns (uint256, uint256, uint256) {
         return (
-        utilityTokenPurchases[buyer][paymentCurrency].paymentAmount, 
-        utilityTokenPurchases[buyer][paymentCurrency].tokenAmount, 
-        utilityTokenPurchases[buyer][paymentCurrency].unlockTime);
+            utilityTokenPurchases[buyer][paymentCurrency].paymentAmount,
+            utilityTokenPurchases[buyer][paymentCurrency].tokenAmount,
+            utilityTokenPurchases[buyer][paymentCurrency].unlockTime
+        );
     }
-    
 }
