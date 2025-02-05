@@ -151,8 +151,9 @@ describe("UniversePreSale NATIVE TOKEN tests", function () {
             }).timeout(DEFAULT_TIMEOUT)
         })
 
-
+      
         describe('POST-PRESALE Withdraw STOX tokens Coins', function () {
+
             it('should withdraw STOX tokens', async function () {
                 for (let x = 1; x < countInvestingWallets; x++) {
                     const PRESALEContractForWallet = PRESALEContract.connect(SIGNERS[x])
@@ -170,26 +171,6 @@ describe("UniversePreSale NATIVE TOKEN tests", function () {
         })
 
         describe('POST-PRESALE ADMIN withdaw NATIVE TOKENS', function () {
-            /*  it('empty NATIVE TOKENS from 0 account (admin)', async function () {
-                 const balance = await ethers.provider.getBalance(SIGNERS[0].address)
-                 console.log('NATIVE TOKENS balance before offload:', balance.toString())
-                 const tx = {
-                     to: SIGNERS[10].address,
-                     value: ethers.parseUnits(
-                         balance.toString(),
-                         18
-                     ) // Leave a small amount to cover gas fees
-                 };
-         
-                 const txResponse = await SIGNERS[0].sendTransaction(tx);
-                 await txResponse.wait();
- 
- 
-                 const newBalance = await ethers.provider.getBalance(SIGNERS[0].address)
-                 console.log('New NATIVE TOKENS balance:', newBalance.toString())
-                 expect(newBalance.toString()).to.equal('0')
-             }).timeout(DEFAULT_TIMEOUT) */
-
             it('should withdraw NATIVE TOKENS', async function () {
                 const PRESALEContractForWallet = PRESALEContract.connect(SIGNERS[0])
                 const raisedEth = await ethers.provider.getBalance(PRESALEContractAddress);
@@ -225,7 +206,7 @@ describe("UniversePreSale NATIVE TOKEN tests", function () {
                 const PRESALEContractForWallet = PRESALEContract.connect(SIGNERS[0])
                 await PRESALEContractForWallet.adminWithdrawRemainingUtilityTokens()
                 const STOXAmountOnEmitterAfterWithdraw = await STOXContractForWallet.balanceOf(SIGNERS[0]);
-                
+
                 expect(STOXAmountOnEmitterAfterWithdraw - STOXAmountOnEmitterBeforeWithdraw).to.equal(remainingSTOXTokens)
 
             }).timeout(DEFAULT_TIMEOUT)

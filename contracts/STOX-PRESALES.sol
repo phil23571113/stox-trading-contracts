@@ -21,11 +21,13 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
     uint256 public presaleEndTime;
     uint256 public softCap;
     uint256 public hardCap;
+    uint256 public lockPeriod;
 
 
     struct TokenPurchase {
         uint256 paymentAmount;
         uint256 tokenAmount;
+        uint256 unlockTime;
     }
 
 
@@ -54,7 +56,8 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         uint256 _presaleStartTime,
         uint256 _presaleEndTime,
         uint256 _softCap,
-        uint256 _hardCap
+        uint256 _hardCap,
+        uint256 _lockPeriod
     ) payable Ownable(msg.sender) {
         require(_utilityToken != address(0), "Invalid token address");
         require(_usdt != address(0), "Invalid usdt address");
@@ -80,6 +83,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         presaleEndTime = _presaleEndTime;
         hardCap = _hardCap;
         softCap = _softCap;
+        lockPeriod = _lockPeriod;
     }
 
     function getLatestETHPrice() public view returns (uint256) {
@@ -157,6 +161,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         
         utilityTokenPurchases[msg.sender][paymentCurrency].tokenAmount += amount;
         utilityTokenPurchases[msg.sender][paymentCurrency].paymentAmount += paymentAmt;
+        utilityTokenPurchases[msg.sender][paymentCurrency].unlockTime = block.timestamp + lockPeriod;
 
 
         emit TokensPurchased(msg.sender, paymentCurrency, paymentAmt, amount);
@@ -212,16 +217,17 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         _unpause();
     }
 
-    function withdrawPurchasedUtilityTokens(address tokenAddress) external whenNotPaused{
+    function withdrawPurchasedUtilityTokens(address paymentCurrency) external whenNotPaused{
         require(presaleFinalized, "Presale not finalized");
         require(totalSold > softCap, "SoftCap not reached");
-        uint256 balance = utilityTokenPurchases[msg.sender][tokenAddress].tokenAmount;
+        uint256 balance = utilityTokenPurchases[msg.sender][paymentCurrency].tokenAmount;
         require(balance != 0, "No tokens to withdraw");
+        require(utilityTokenPurchases[msg.sender][paymentCurrency].unlockTime < block.timestamp, "Tokens are locked");
         require(
             utilityToken.transfer(msg.sender, balance),
             "Token transfer failed"
         );
-        utilityTokenPurchases[msg.sender][tokenAddress].tokenAmount = 0;
+        utilityTokenPurchases[msg.sender][paymentCurrency].tokenAmount = 0;
 
     }
 
@@ -248,8 +254,11 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
     function getPurchasedBalance(
         address buyer,
         address paymentCurrency
-    ) external view returns (uint256, uint256) {
-        return (utilityTokenPurchases[buyer][paymentCurrency].paymentAmount, utilityTokenPurchases[buyer][paymentCurrency].tokenAmount);
+    ) external view returns (uint256, uint256, uint256) {
+        return (
+        utilityTokenPurchases[buyer][paymentCurrency].paymentAmount, 
+        utilityTokenPurchases[buyer][paymentCurrency].tokenAmount, 
+        utilityTokenPurchases[buyer][paymentCurrency].unlockTime);
     }
     
 }

@@ -17,6 +17,8 @@ async function deployPresaleSetupFixture() {
     const SIGNERS = await ethers.getSigners()
     const presaleStartTime = Math.floor(Date.now() / 1000) + 5
     const presaleEndTime = Math.floor(Date.now() / 1000) + 20
+    const lockPeriod = 60 * 60 * 24 * 30 // 60 * 60 * 24 * 30 -> 30 days
+
 
     const MockV3AggregatorContractFactory = await ethers.getContractFactory('MockV3Aggregator')
     const MockV3AggregatorContract = await MockV3AggregatorContractFactory.deploy("271265000000",)
@@ -51,7 +53,8 @@ async function deployPresaleSetupFixture() {
         presaleStartTime,    // Presale start time
         presaleEndTime,    // Presale end time
         "500000000000000000000",       // Softcap 20,000 * 1e18
-        "500000000000000000000000"    // Hardcap 200,000 * 1e18
+        "500000000000000000000000", // Hardcap 200,000 * 1e18
+        lockPeriod, // Lock period   
 
     )
     PRESALEContract.waitForDeployment()
