@@ -1,12 +1,16 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.28;
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
+
+    using SafeERC20 for IERC20;
+
     AggregatorV3Interface internal ethUsdPriceFeed;
 
     IERC20 public utilityToken;
@@ -58,7 +62,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         uint256 _softCap,
         uint256 _hardCap,
         uint256 _lockPeriod
-    ) payable Ownable(msg.sender) {
+    ) payable Ownable(msg.sender)  {
         require(_utilityToken != address(0), "Invalid token address");
         require(_usdt != address(0), "Invalid usdt address");
         require(_usdc != address(0), "Invalid usdc address");
@@ -146,14 +150,11 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
                 "Insufficient balance"
             );
             // Transfer payment tokens
-            require(
-                IERC20(paymentCurrency).transferFrom(
+            IERC20(paymentCurrency).safeTransferFrom(
                     msg.sender,
                     address(this),
                     paymentAmt
-                ),
-                "Payment transfer failed"
-            );
+                );
         }
 
         // Update state
@@ -171,10 +172,8 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         require(presaleFinalized, "Presale not finalized");
         uint256 balance = utilityToken.balanceOf(address(this));
         require(balance != 0, "No tokens to withdraw");
-        require(
-            utilityToken.transfer(owner(), balance),
-            "Token transfer failed"
-        );
+        
+        utilityToken.safeTransfer(owner(), balance);
         
     }
 
@@ -191,13 +190,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         require(totalSold >= softCap, "SoftCap not reached");
         uint256 balance = IERC20(tokenAddress).balanceOf(address(this));
         require(balance != 0, "No funds to withdraw");
-        require(
-            IERC20(tokenAddress).transfer(
-                owner(),
-                balance
-            ),
-            "Token transfer failed"
-        );
+        IERC20(tokenAddress).safeTransfer(owner(),balance);
     }
 
     function finalizePresale() external onlyOwner payable{
@@ -223,10 +216,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         uint256 balance = utilityTokenPurchases[msg.sender][paymentCurrency].tokenAmount;
         require(balance != 0, "No tokens to withdraw");
         require(utilityTokenPurchases[msg.sender][paymentCurrency].unlockTime < block.timestamp, "Tokens are locked");
-        require(
-            utilityToken.transfer(msg.sender, balance),
-            "Token transfer failed"
-        );
+        utilityToken.safeTransfer(msg.sender, balance);
         utilityTokenPurchases[msg.sender][paymentCurrency].tokenAmount = 0;
 
     }
@@ -240,13 +230,7 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
             payable(msg.sender).transfer(balance);
 
         } else {
-        require(
-            IERC20(paymentCurrencyAddress).transfer(
-                msg.sender,
-                balance
-            ),
-            "Token transfer failed"
-        );
+            IERC20(paymentCurrencyAddress).safeTransfer(msg.sender,balance);
         }
         utilityTokenPurchases[msg.sender][paymentCurrencyAddress].paymentAmount = 0;
     }

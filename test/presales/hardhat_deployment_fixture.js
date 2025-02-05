@@ -16,7 +16,7 @@ async function deployPresaleSetupFixture() {
 
     const SIGNERS = await ethers.getSigners()
     const presaleStartTime = Math.floor(Date.now() / 1000) + 5
-    const presaleEndTime = Math.floor(Date.now() / 1000) + 20
+    const presaleEndTime = Math.floor(Date.now() / 1000) + 25
     const lockPeriod = 60 * 60 * 24 * 30 // 60 * 60 * 24 * 30 -> 30 days
 
 
