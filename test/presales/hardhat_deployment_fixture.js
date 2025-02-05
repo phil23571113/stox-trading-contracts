@@ -31,7 +31,7 @@ async function deployPresaleSetupFixture() {
     console.log('STOX Contract token deployed to:', STOXContractAddress)
 
 
-    const USDTContract = await ethers.deployContract('Usdt')
+    const USDTContract = await ethers.deployContract('MockUsdt')
     const USDTContractAddress = await USDTContract.getAddress()
     console.log('USDT Contract token deployed to:', USDTContractAddress)
 
