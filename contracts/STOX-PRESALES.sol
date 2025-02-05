@@ -226,13 +226,14 @@ contract UniversePreSale is Ownable2Step, ReentrancyGuard, Pausable {
         require(totalSold < softCap, "SoftCap not reached");
         uint256 balance = utilityTokenPurchases[msg.sender][paymentCurrencyAddress].paymentAmount;
         require(balance != 0, "No tokens to withdraw");
+        utilityTokenPurchases[msg.sender][paymentCurrencyAddress].paymentAmount = 0;
         if (address(paymentCurrencyAddress) == address(0)) {
             payable(msg.sender).transfer(balance);
 
         } else {
             IERC20(paymentCurrencyAddress).safeTransfer(msg.sender,balance);
         }
-        utilityTokenPurchases[msg.sender][paymentCurrencyAddress].paymentAmount = 0;
+        
     }
 
     function getPurchasedBalance(
