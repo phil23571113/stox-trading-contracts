@@ -30,19 +30,20 @@ async function main() {
 
     const nfpmanager= await ethers.getContractAt(NFP_ABI, "0x27F971cb582BF9E50F397e4d29a5C7A34f11faA2");
     const nfpmanagerAddress = await nfpmanager.getAddress();
-    console.log("nfpmanagerAddres",nfpmanagerAddress)
+    console.log("nfpmanagerAddress",nfpmanagerAddress)
     
    
 
     const usdtContract = await ethers.getContractAt(ERC20_ABI, MockUSDT_ADDRESS);
     const stoxContract = await ethers.getContractAt(ERC20_ABI, STOX_ADDRESS);
 
-    const usdtAmount = ethers.parseUnits("1000000", 6); // Adjust the amount as needed
-    const stoxAmount = ethers.parseUnits("1000000", 18); // Adjust the amount as needed
+    const usdtAmount = ethers.parseUnits("100000", 6); // Adjust the amount as needed
+    const stoxAmount = ethers.parseUnits("100000", 18); // Adjust the amount as needed
 
     // Approve the pool contract to spend USDT and STOX
-    await usdtContract.approve(nfpmanagerAddress, usdtAmount);
     await stoxContract.approve(nfpmanagerAddress, stoxAmount);
+    await usdtContract.approve(nfpmanagerAddress, usdtAmount);
+    
 
     // Add liquidity to the pool
     const mintParams = {
