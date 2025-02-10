@@ -26,6 +26,12 @@ importers:
       '@uniswap/v2-sdk':
         specifier: ^4.13.0
         version: 4.13.0
+      '@uniswap/v3-core':
+        specifier: ^1.0.1
+        version: 1.0.1
+      '@uniswap/v3-periphery':
+        specifier: ^1.4.4
+        version: 1.4.4
       '@uniswap/v3-sdk':
         specifier: ^3.24.0
         version: 3.24.0(hardhat@2.22.18(bufferutil@4.0.7)(ts-node@10.9.2(@types/node@22.12.0)(typescript@5.7.3))(typescript@5.7.3)(utf-8-validate@6.0.3))
