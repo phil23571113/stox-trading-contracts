@@ -8,7 +8,7 @@ const token0Decimals = 6;
 const token1Address = "0xF27a9024Cf252D31705CeF15a6581F2e0aa7d8F7";
 const token1Symbol = "STOX";
 const token1Decimals = 18;
-FEE = 3000;
+FEE = 500;
 const POOL_ABI = [
     "function slot0() external view returns (uint160 sqrtPriceX96, int24 tick, uint16 observationIndex, uint16 observationCardinality, uint16 observationCardinalityNext, uint8 feeProtocol, bool unlocked)",
     "function liquidity() external view returns (uint128)",
