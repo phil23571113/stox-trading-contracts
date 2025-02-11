@@ -1,6 +1,6 @@
 import math
 
-# Intended human price: 0.1 (e.g., 0.1 STOX per USDT)
+# Intended human price: 10 (e.g., 10 STOX per USDT)
 human_price = 10 
 
 # Token decimals:
