@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
 contract Orderbook is Ownable2Step, ReentrancyGuard, Pausable {
-    //using SafeMath for uint256;
     IERC20 currencyToken;
     IERC20 securityToken;
 

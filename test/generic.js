@@ -9,7 +9,10 @@ let SIGNERS
 let STOXContract
 let NVDAContract
 let ORDERBOOKContract
-let distributedAmount = ethers.parseUnits('1000', 18) // 100 tokens with 18 decimals
+let STOXContractAddress
+let NVDAContractAddress
+let ORDERBOOKContractAddress
+let distributedAmount = ethers.parseUnits('100', 18) // 100 tokens with 18 decimals
 let buyAmount = 2
 let sellAmount = 2
 let usedWalletNbForCancel = 2
@@ -20,6 +23,7 @@ let bestSellPrice = 10
 describe('Retrieve Connected Signers', function () {
     it('retrieve the connected  signers', async function () {
         SIGNERS = await ethers.getSigners()
+        //console.log('Signers:', SIGNERS)
     }).timeout(DEFAULT_TIMEOUT)
 })
 
@@ -28,17 +32,19 @@ describe('Deploy contracts', function () {
         this.STOXContractFactory = await ethers.getContractFactory('Stox')
         STOXContract = await this.STOXContractFactory.deploy()
         await STOXContract.waitForDeployment()
-        console.log('STOX token deployed to:', STOXContract.address)
+        STOXContractAddress = await STOXContract.getAddress()
+        console.log('STOX token deployed to:', STOXContractAddress)
     }).timeout(DEFAULT_TIMEOUT)
 
     it('should deploy the NVDA security token contract', async function () {
-        const amount = ethers.parseUnits('1000', 18)
+        const amount = ethers.parseUnits('100000', 18)
         this.NVDAContractFactory = await ethers.getContractFactory(
             'NvidiaSecurity'
         )
         NVDAContract = await this.NVDAContractFactory.deploy(amount)
         await NVDAContract.waitForDeployment()
-        console.log('NVDA token deployed to:', NVDAContract.address)
+        NVDAContractAddress = await NVDAContract.getAddress()
+        console.log('NVDA token deployed to:',NVDAContractAddress)
     }).timeout(DEFAULT_TIMEOUT)
 
     it('should deploy the Order Book contract', async function () {
@@ -46,11 +52,12 @@ describe('Deploy contracts', function () {
             'Orderbook'
         )
         ORDERBOOKContract = await this.ORDERBOOKContractFactory.deploy(
-            STOXContract.getAddress(),
-            NVDAContract.getAddress()
+            STOXContractAddress,
+            NVDAContractAddress
         )
         await ORDERBOOKContract.waitForDeployment()
-        console.log('Order Book deployed to:', await ORDERBOOKContract.getAddress())
+        ORDERBOOKContractAddress = await ORDERBOOKContract.getAddress()
+        console.log('Order Book deployed to:', ORDERBOOKContractAddress)
     }).timeout(DEFAULT_TIMEOUT)
 })
 
@@ -58,11 +65,11 @@ describe('Distribute tokens', function () {
     it('should send 100 NVDA and 100 STOX tokens to 5 test wallets', async function () {
         for (let x = 1; x < 6; x++) {
             await NVDAContract.transfer(
-                SIGNERS[x].address,
+                await SIGNERS[x].address,
                 distributedAmount
             )
             await STOXContract.transfer(
-                SIGNERS[x].address,
+                await SIGNERS[x].address,
                 distributedAmount
             )
         }

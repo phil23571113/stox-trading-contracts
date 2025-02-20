@@ -1,9 +1,15 @@
 require("@nomicfoundation/hardhat-toolbox");
+require("@nomicfoundation/hardhat-verify");
+
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
     version: '0.8.28',
+    settings: {
+      viaIR: true,
+    },
+    
   },
   networks: {
     /*'base-mainnet': {
@@ -44,5 +50,8 @@ module.exports = {
       }
     ]
   },
+  sourcify: {
+    enabled: true
+  }
 };
 
